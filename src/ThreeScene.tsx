@@ -1,13 +1,33 @@
 import { Canvas } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
-import { OrbitControls, TransformControls, Line, Billboard } from '@react-three/drei'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { OrbitControls, TransformControls, Line, PointMaterial } from '@react-three/drei'
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import type { JSX } from 'react'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import { DoubleSide, Object3D, Vector3 } from 'three'
+import {
+  DoubleSide,
+  Object3D,
+  Vector3,
+  BufferGeometry,
+  Float32BufferAttribute,
+} from 'three'
 
 const LINE_WIDTH = 2
 const POINT_SIZE = LINE_WIDTH * 2
+
+function Marker({ position }: { position: Vector3 }) {
+  const geometry = useMemo(() => {
+    const g = new BufferGeometry()
+    g.setAttribute('position', new Float32BufferAttribute([0, 0, 0], 3))
+    return g
+  }, [])
+  return (
+    <points position={position}>
+      <primitive object={geometry} />
+      <PointMaterial color="red" size={POINT_SIZE} sizeAttenuation={false} />
+    </points>
+  )
+}
 
 
 function Box({
@@ -203,28 +223,13 @@ export default function ThreeScene({ planes, lineMode }: ThreeSceneProps) {
       {lines.map((pts, idx) => (
         <group key={idx}>
           <Line points={pts} color="yellow" lineWidth={LINE_WIDTH} />
-          <Billboard position={pts[0]}>
-            <mesh scale={POINT_SIZE}>
-              <circleGeometry args={[0.5, 16]} />
-              <meshBasicMaterial color="red" />
-            </mesh>
-          </Billboard>
-          <Billboard position={pts[pts.length - 1]}>
-            <mesh scale={POINT_SIZE}>
-              <circleGeometry args={[0.5, 16]} />
-              <meshBasicMaterial color="red" />
-            </mesh>
-          </Billboard>
+          <Marker position={pts[0]} />
+          <Marker position={pts[pts.length - 1]} />
         </group>
       ))}
       {current.length > 1 && <Line points={current} color="yellow" lineWidth={LINE_WIDTH} />}
       {current.map((pt, idx) => (
-        <Billboard key={`p${idx}`} position={pt}>
-          <mesh scale={POINT_SIZE}>
-            <circleGeometry args={[0.5, 16]} />
-            <meshBasicMaterial color="red" />
-          </mesh>
-        </Billboard>
+        <Marker key={`p${idx}`} position={pt} />
       ))}
       {hover && current.length > 0 && (
         <Line
