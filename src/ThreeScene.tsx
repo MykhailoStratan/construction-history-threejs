@@ -1,31 +1,26 @@
 import { Canvas } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
-import { OrbitControls, TransformControls, Line, PointMaterial } from '@react-three/drei'
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
+import { OrbitControls, TransformControls, Line, Billboard } from '@react-three/drei'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import {
   DoubleSide,
   Object3D,
   Vector3,
-  BufferGeometry,
-  Float32BufferAttribute,
 } from 'three'
 
 const LINE_WIDTH = 2
 const POINT_SIZE = LINE_WIDTH * 2
 
 function Marker({ position }: { position: Vector3 }) {
-  const geometry = useMemo(() => {
-    const g = new BufferGeometry()
-    g.setAttribute('position', new Float32BufferAttribute([0, 0, 0], 3))
-    return g
-  }, [])
   return (
-    <points position={position}>
-      <primitive object={geometry} />
-      <PointMaterial color="red" size={POINT_SIZE} sizeAttenuation={false} />
-    </points>
+    <Billboard position={position} follow>
+      <mesh>
+        <circleGeometry args={[POINT_SIZE / 2, 16]} />
+        <meshBasicMaterial color="red" />
+      </mesh>
+    </Billboard>
   )
 }
 
