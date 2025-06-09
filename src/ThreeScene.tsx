@@ -17,7 +17,14 @@ function Box({
   const ref = useRef<Object3D>(null!)
   const isSelected = selectedObject === ref.current
   return (
-    <mesh ref={ref} {...props} onClick={() => onSelect(ref.current)}>
+    <mesh
+      ref={ref}
+      {...props}
+      onClick={(e) => {
+        e.stopPropagation()
+        onSelect(ref.current)
+      }}
+    >
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial
         color={isSelected ? '#00008B' : 'orange'}
@@ -43,7 +50,10 @@ function Plane({
       ref={ref}
       rotation={[-Math.PI / 2, 0, 0]}
       {...props}
-      onClick={() => onSelect(ref.current)}
+      onClick={(e) => {
+        e.stopPropagation()
+        onSelect(ref.current)
+      }}
     >
       <planeGeometry args={[10, 10]} />
       <meshStandardMaterial
