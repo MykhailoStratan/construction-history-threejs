@@ -1,6 +1,7 @@
 import { Canvas } from '@react-three/fiber'
+import type { ThreeEvent } from '@react-three/fiber'
 import { OrbitControls, TransformControls, Line } from '@react-three/drei'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { DoubleSide, Object3D, Vector3 } from 'three'
@@ -90,17 +91,50 @@ export default function ThreeScene({ planes, lineMode }: ThreeSceneProps) {
   const [selected, setSelected] = useState<Object3D | null>(null)
   const orbitRef = useRef<OrbitControlsImpl | null>(null)
   const [lines, setLines] = useState<Vector3[][]>([])
-  const pending = useRef<Vector3[]>([])
+  const [current, setCurrent] = useState<Vector3[]>([])
+  const [hover, setHover] = useState<Vector3 | null>(null)
 
-  const addLinePoint = (p: Vector3) => {
-    const next = [...pending.current, p]
-    if (next.length === 2) {
-      setLines((ls) => [...ls, [next[0], next[1]]])
-      pending.current = []
-    } else {
-      pending.current = next
-    }
-  }
+  const snapPoint = useCallback(
+    (p: Vector3) => {
+      const snapCandidates: Vector3[] = []
+      lines.forEach((ln) => {
+        if (ln.length > 0) snapCandidates.push(ln[0], ln[ln.length - 1])
+      })
+      current.forEach((pt) => snapCandidates.push(pt))
+      let nearest: Vector3 | null = null
+      let minDist = Infinity
+      for (const pt of snapCandidates) {
+        const dist = pt.distanceTo(p)
+        if (dist < 0.2 && dist < minDist) {
+          nearest = pt
+          minDist = dist
+        }
+      }
+      return nearest ? nearest.clone() : p
+    },
+    [lines, current],
+  )
+
+  const addLinePoint = useCallback(
+    (p: Vector3) => {
+      const snapped = snapPoint(p)
+      setCurrent((cur) => [...cur, snapped])
+      setHover(null)
+    },
+    [snapPoint],
+  )
+
+  const finalizeLine = useCallback(() => {
+    setHover(null)
+    setCurrent((cur) => {
+      if (cur.length > 1) setLines((ls) => [...ls, cur])
+      return []
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!lineMode && current.length > 0) finalizeLine()
+  }, [lineMode, current.length, finalizeLine])
 
   useEffect(() => {
     // ensure nothing is selected on initial mount
@@ -109,21 +143,27 @@ export default function ThreeScene({ planes, lineMode }: ThreeSceneProps) {
 
   useEffect(() => {
     function handleKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') setSelected(null)
+      if (event.key === 'Escape') finalizeLine()
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [])
+  }, [finalizeLine])
 
   return (
     <Canvas
       style={{ height: '100vh', width: '100vw' }}
       onContextMenu={(e) => {
         e.preventDefault()
+        finalizeLine()
         setSelected(null)
       }}
       onPointerMissed={() => {
         if (!lineMode) setSelected(null)
+      }}
+      onPointerMove={(e: ThreeEvent<PointerEvent>) => {
+        if (lineMode && current.length > 0) {
+          setHover(snapPoint(e.point.clone()))
+        }
       }}
     >
       <ambientLight />
@@ -157,8 +197,32 @@ export default function ThreeScene({ planes, lineMode }: ThreeSceneProps) {
         />
       )}
       {lines.map((pts, idx) => (
-        <Line key={idx} points={pts} color="yellow" lineWidth={2} />
+        <group key={idx}>
+          <Line points={pts} color="yellow" lineWidth={2} />
+          <mesh position={pts[0]}>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshBasicMaterial color="red" />
+          </mesh>
+          <mesh position={pts[pts.length - 1]}>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshBasicMaterial color="red" />
+          </mesh>
+        </group>
       ))}
+      {current.length > 1 && <Line points={current} color="yellow" lineWidth={2} />}
+      {current.map((pt, idx) => (
+        <mesh key={`p${idx}`} position={pt}>
+          <sphereGeometry args={[0.05, 8, 8]} />
+          <meshBasicMaterial color="red" />
+        </mesh>
+      ))}
+      {hover && current.length > 0 && (
+        <Line
+          points={[current[current.length - 1], hover]}
+          color="yellow"
+          lineWidth={2}
+        />
+      )}
       <OrbitControls ref={orbitRef} />
     </Canvas>
   )
