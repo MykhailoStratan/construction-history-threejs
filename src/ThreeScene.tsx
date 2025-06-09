@@ -32,7 +32,7 @@ export default function ThreeScene({ planes }: ThreeSceneProps) {
       <pointLight position={[10, 10, 10]} />
       <Box />
       {planes.map((id) => (
-        <Plane key={id} position={[0, 0, 0]} />
+        <Plane key={id} position={[id * 12, 0, 0]} />
       ))}
       <OrbitControls />
     </Canvas>
