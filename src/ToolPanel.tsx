@@ -1,9 +1,13 @@
 import './ToolPanel.css'
 
-export default function ToolPanel() {
+interface ToolPanelProps {
+  onAddPlane: () => void
+}
+
+export default function ToolPanel({ onAddPlane }: ToolPanelProps) {
   return (
     <div className="tool-panel">
-      {/* Buttons for instruments will be added here */}
+      <button onClick={onAddPlane}>Plane</button>
     </div>
-  );
+  )
 }
