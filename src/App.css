@@ -4,3 +4,14 @@
   margin: 0;
   position: relative;
 }
+
+.message {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
