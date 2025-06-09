@@ -15,7 +15,7 @@ function Box({
   selectedObject: Object3D | null
 }) {
   const ref = useRef<Object3D>(null!)
-  const isSelected = selectedObject === ref.current
+  const isSelected = selectedObject != null && selectedObject === ref.current
   return (
     <mesh
       ref={ref}
@@ -44,7 +44,7 @@ function Plane({
   selectedObject: Object3D | null
 }) {
   const ref = useRef<Object3D>(null!)
-  const isSelected = selectedObject === ref.current
+  const isSelected = selectedObject != null && selectedObject === ref.current
   return (
     <mesh
       ref={ref}
