@@ -1,10 +1,13 @@
 import { Canvas } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
-import { OrbitControls, TransformControls, Line } from '@react-three/drei'
+import { OrbitControls, TransformControls, Line, Billboard } from '@react-three/drei'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { DoubleSide, Object3D, Vector3 } from 'three'
+
+const LINE_WIDTH = 2
+const POINT_SIZE = LINE_WIDTH * 2
 
 
 function Box({
@@ -199,29 +202,35 @@ export default function ThreeScene({ planes, lineMode }: ThreeSceneProps) {
       )}
       {lines.map((pts, idx) => (
         <group key={idx}>
-          <Line points={pts} color="yellow" lineWidth={2} />
-          <mesh position={pts[0]}>
-            <sphereGeometry args={[0.05, 8, 8]} />
-            <meshBasicMaterial color="red" />
-          </mesh>
-          <mesh position={pts[pts.length - 1]}>
-            <sphereGeometry args={[0.05, 8, 8]} />
-            <meshBasicMaterial color="red" />
-          </mesh>
+          <Line points={pts} color="yellow" lineWidth={LINE_WIDTH} />
+          <Billboard position={pts[0]}>
+            <mesh scale={POINT_SIZE}>
+              <circleGeometry args={[0.5, 16]} />
+              <meshBasicMaterial color="red" />
+            </mesh>
+          </Billboard>
+          <Billboard position={pts[pts.length - 1]}>
+            <mesh scale={POINT_SIZE}>
+              <circleGeometry args={[0.5, 16]} />
+              <meshBasicMaterial color="red" />
+            </mesh>
+          </Billboard>
         </group>
       ))}
-      {current.length > 1 && <Line points={current} color="yellow" lineWidth={2} />}
+      {current.length > 1 && <Line points={current} color="yellow" lineWidth={LINE_WIDTH} />}
       {current.map((pt, idx) => (
-        <mesh key={`p${idx}`} position={pt}>
-          <sphereGeometry args={[0.05, 8, 8]} />
-          <meshBasicMaterial color="red" />
-        </mesh>
+        <Billboard key={`p${idx}`} position={pt}>
+          <mesh scale={POINT_SIZE}>
+            <circleGeometry args={[0.5, 16]} />
+            <meshBasicMaterial color="red" />
+          </mesh>
+        </Billboard>
       ))}
       {hover && current.length > 0 && (
         <Line
           points={[current[current.length - 1], hover]}
           color="yellow"
-          lineWidth={2}
+          lineWidth={LINE_WIDTH}
         />
       )}
       <OrbitControls ref={orbitRef} />
