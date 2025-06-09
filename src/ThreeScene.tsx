@@ -20,7 +20,7 @@ function Box({
     <mesh
       ref={ref}
       {...props}
-      onClick={(e) => {
+      onPointerDown={(e) => {
         e.stopPropagation()
         onSelect(ref.current)
       }}
@@ -50,7 +50,7 @@ function Plane({
       ref={ref}
       rotation={[-Math.PI / 2, 0, 0]}
       {...props}
-      onClick={(e) => {
+      onPointerDown={(e) => {
         e.stopPropagation()
         onSelect(ref.current)
       }}
@@ -93,6 +93,7 @@ export default function ThreeScene({ planes }: ThreeSceneProps) {
         e.preventDefault()
         setSelected(null)
       }}
+      onPointerMissed={() => setSelected(null)}
     >
       <ambientLight />
       <pointLight position={[10, 10, 10]} />
