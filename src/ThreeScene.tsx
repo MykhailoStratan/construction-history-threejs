@@ -74,6 +74,11 @@ export default function ThreeScene({ planes }: ThreeSceneProps) {
   const orbitRef = useRef<OrbitControlsImpl | null>(null)
 
   useEffect(() => {
+    // ensure nothing is selected on initial mount
+    setSelected(null)
+  }, [])
+
+  useEffect(() => {
     function handleKey(event: KeyboardEvent) {
       if (event.key === 'Escape') setSelected(null)
     }
