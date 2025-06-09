@@ -1,18 +1,11 @@
-import { Canvas, useFrame } from '@react-three/fiber'
-import { useRef } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
 import type { JSX } from 'react'
 
-import type { Mesh } from 'three'
 
 function Box(props: JSX.IntrinsicElements['mesh']) {
-  const ref = useRef<Mesh>(null!)
-  useFrame(() => {
-    if (!ref.current) return
-    ref.current.rotation.x += 0.01
-    ref.current.rotation.y += 0.01
-  })
   return (
-    <mesh ref={ref} {...props}>
+    <mesh {...props}>
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color="orange" />
     </mesh>
@@ -25,6 +18,7 @@ export default function ThreeScene() {
       <ambientLight />
       <pointLight position={[10, 10, 10]} />
       <Box />
+      <OrbitControls />
     </Canvas>
   )
 }
