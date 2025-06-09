@@ -160,9 +160,10 @@ export default function ThreeScene({ planes, lineMode }: ThreeSceneProps) {
       onPointerMissed={() => {
         if (!lineMode) setSelected(null)
       }}
-      onPointerMove={(e: ThreeEvent<PointerEvent>) => {
+      onPointerMove={(e) => {
+        const ev = e as unknown as ThreeEvent<PointerEvent>
         if (lineMode && current.length > 0) {
-          setHover(snapPoint(e.point.clone()))
+          setHover(snapPoint(ev.point.clone()))
         }
       }}
     >
