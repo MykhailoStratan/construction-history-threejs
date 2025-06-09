@@ -1,27 +1,43 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, TransformControls } from '@react-three/drei'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { DoubleSide, Object3D } from 'three'
 
 
-function Box({ onSelect, ...props }: JSX.IntrinsicElements['mesh'] & { onSelect: (obj: Object3D) => void }) {
+function Box({
+  onSelect,
+  selectedObject,
+  ...props
+}: JSX.IntrinsicElements['mesh'] & {
+  onSelect: (obj: Object3D) => void
+  selectedObject: Object3D | null
+}) {
   const ref = useRef<Object3D>(null!)
+  const isSelected = selectedObject === ref.current
   return (
-    <mesh
-      ref={ref}
-      {...props}
-      onClick={() => onSelect(ref.current)}
-    >
+    <mesh ref={ref} {...props} onClick={() => onSelect(ref.current)}>
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color="orange" />
+      <meshStandardMaterial
+        color={isSelected ? 'darkblue' : 'orange'}
+        transparent
+        opacity={isSelected ? 0.8 : 1}
+      />
     </mesh>
   )
 }
 
-function Plane({ onSelect, ...props }: JSX.IntrinsicElements['mesh'] & { onSelect: (obj: Object3D) => void }) {
+function Plane({
+  onSelect,
+  selectedObject,
+  ...props
+}: JSX.IntrinsicElements['mesh'] & {
+  onSelect: (obj: Object3D) => void
+  selectedObject: Object3D | null
+}) {
   const ref = useRef<Object3D>(null!)
+  const isSelected = selectedObject === ref.current
   return (
     <mesh
       ref={ref}
@@ -30,7 +46,12 @@ function Plane({ onSelect, ...props }: JSX.IntrinsicElements['mesh'] & { onSelec
       onClick={() => onSelect(ref.current)}
     >
       <planeGeometry args={[10, 10]} />
-      <meshStandardMaterial color="lightgray" side={DoubleSide} />
+      <meshStandardMaterial
+        color={isSelected ? 'darkblue' : 'lightgray'}
+        side={DoubleSide}
+        transparent
+        opacity={isSelected ? 0.8 : 1}
+      />
     </mesh>
   )
 }
@@ -42,16 +63,27 @@ export default function ThreeScene({ planes }: ThreeSceneProps) {
   const [selected, setSelected] = useState<Object3D | null>(null)
   const orbitRef = useRef<OrbitControlsImpl | null>(null)
 
+  useEffect(() => {
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') setSelected(null)
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [])
+
   return (
     <Canvas
       style={{ height: '100vh', width: '100vw' }}
-      onPointerMissed={() => setSelected(null)}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        setSelected(null)
+      }}
     >
       <ambientLight />
       <pointLight position={[10, 10, 10]} />
-      <Box onSelect={setSelected} />
+      <Box onSelect={setSelected} selectedObject={selected} />
       {planes.map((id) => (
-        <Plane key={id} position={[0, 0, 0]} onSelect={setSelected} />
+        <Plane key={id} position={[0, 0, 0]} onSelect={setSelected} selectedObject={selected} />
       ))}
       {selected && (
         <TransformControls
