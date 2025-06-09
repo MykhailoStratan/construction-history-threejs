@@ -20,7 +20,7 @@ function Box({
     <mesh ref={ref} {...props} onClick={() => onSelect(ref.current)}>
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial
-        color={isSelected ? 'darkblue' : 'orange'}
+        color={isSelected ? '#00008B' : 'orange'}
         transparent
         opacity={isSelected ? 0.8 : 1}
       />
@@ -47,7 +47,7 @@ function Plane({
     >
       <planeGeometry args={[10, 10]} />
       <meshStandardMaterial
-        color={isSelected ? 'darkblue' : 'lightgray'}
+        color={isSelected ? '#00008B' : 'lightgray'}
         side={DoubleSide}
         transparent
         opacity={isSelected ? 0.8 : 1}
