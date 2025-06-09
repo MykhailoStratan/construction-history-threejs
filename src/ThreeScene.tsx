@@ -17,7 +17,7 @@ function Plane(props: JSX.IntrinsicElements['mesh']) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} {...props}>
       <planeGeometry args={[10, 10]} />
-      <meshStandardMaterial color="lightgrey" side={DoubleSide} />
+      <meshStandardMaterial color="lightgray" side={DoubleSide} />
     </mesh>
   )
 }
