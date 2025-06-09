@@ -6,6 +6,7 @@ import './App.css'
 export default function App() {
   const [planes, setPlanes] = useState<number[]>([])
   const [message, setMessage] = useState<string | null>(null)
+  const [lineMode, setLineMode] = useState<boolean>(false)
 
   const addPlane = () => {
     setPlanes((prev) => [...prev, prev.length])
@@ -21,8 +22,8 @@ export default function App() {
 
   return (
     <div className="app">
-      <ToolPanel onAddPlane={addPlane} />
-      <ThreeScene planes={planes} />
+      <ToolPanel onAddPlane={addPlane} lineMode={lineMode} toggleLineMode={() => setLineMode((prev) => !prev)} />
+      <ThreeScene planes={planes} lineMode={lineMode} />
       {message && <div className="message">{message}</div>}
     </div>
   )

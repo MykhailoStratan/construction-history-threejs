@@ -11,3 +11,12 @@
   align-items: center;
   padding-top: 1rem;
 }
+
+.tool-panel button {
+  margin-bottom: 0.5rem;
+}
+
+.tool-panel button.active {
+  background-color: #00008b;
+  color: white;
+}
