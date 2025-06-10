@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ThreeScene from './ThreeScene'
 import ToolPanel from './ToolPanel'
+import HeaderMenu from './HeaderMenu'
 import type { LineData, LineEnd, PointData } from './types'
 import './App.css'
 
@@ -97,6 +98,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <HeaderMenu />
       <ToolPanel
         onAddPlane={addPlane}
         pointEnabled={mode === 'placePoint'}
