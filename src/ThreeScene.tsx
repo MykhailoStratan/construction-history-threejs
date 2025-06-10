@@ -164,7 +164,7 @@ export default function ThreeScene({ planes, points, mode, onAddPoint }: ThreeSc
           .toArray()
         return (
           <mesh key={idx} position={position} quaternion={quaternion}>
-            <circleGeometry args={[0.1, 16]} />
+            <circleGeometry args={[0.01, 16]} />
             <meshStandardMaterial color="red" side={DoubleSide} />
           </mesh>
         )
