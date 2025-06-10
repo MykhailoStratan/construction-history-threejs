@@ -5,7 +5,12 @@ import './App.css'
 
 export default function App() {
   const [planes, setPlanes] = useState<number[]>([])
-  const [points, setPoints] = useState<[number, number, number][]>([])
+  interface PointData {
+    position: [number, number, number]
+    normal: [number, number, number]
+  }
+
+  const [points, setPoints] = useState<PointData[]>([])
   const [mode, setMode] = useState<'select' | 'placePoint'>('select')
   const [message, setMessage] = useState<string | null>(null)
 
@@ -19,7 +24,7 @@ export default function App() {
     setMessage('Click on an object to place a point')
   }
 
-  const handlePointAdd = (point: [number, number, number]) => {
+  const handlePointAdd = (point: PointData) => {
     setPoints((prev) => [...prev, point])
     setMode('select')
     setMessage('Point added')
