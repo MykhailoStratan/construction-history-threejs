@@ -227,6 +227,7 @@ interface ThreeSceneProps {
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
   onCancelPointPlacement: () => void
+  onCancelLineChain: () => void
   onCancelMove: () => void
 }
 
@@ -240,6 +241,7 @@ export default function ThreeScene({
   onAddLinePoint,
   onUpdateTempLineEnd,
   onCancelPointPlacement,
+  onCancelLineChain,
   onCancelMove,
 }: ThreeSceneProps) {
   const [selected, setSelected] = useState<Object3D | null>(null)
@@ -275,13 +277,11 @@ export default function ThreeScene({
       onContextMenu={(e) => {
         e.preventDefault()
         setSelected(null)
-        if (mode === 'placePoint' || mode === 'placeLine')
-          onCancelPointPlacement()
+        if (mode === 'placeLine') onCancelLineChain()
       }}
       onPointerMissed={() => {
         setSelected(null)
-        if (mode === 'placePoint' || mode === 'placeLine')
-          onCancelPointPlacement()
+        if (mode === 'placeLine') onCancelLineChain()
       }}
     >
       <ambientLight />

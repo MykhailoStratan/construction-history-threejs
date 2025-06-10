@@ -43,16 +43,30 @@ export default function App() {
     setMode('idle')
   }
 
-  const enablePointPlacement = () => {
-    setMode('placePoint')
-    setMessage('Click on an object to place a point')
-  }
-
-  const enableLineDrawing = () => {
+  const togglePointPlacement = () => {
     setLineStart(null)
     setTempLineEnd(null)
-    setMode('placeLine')
-    setMessage('Click to set start of line')
+    setMode((prev) => {
+      if (prev === 'placePoint') {
+        setMessage(null)
+        return 'idle'
+      }
+      setMessage('Click on an object to place a point')
+      return 'placePoint'
+    })
+  }
+
+  const toggleLineDrawing = () => {
+    setLineStart(null)
+    setTempLineEnd(null)
+    setMode((prev) => {
+      if (prev === 'placeLine') {
+        setMessage(null)
+        return 'idle'
+      }
+      setMessage('Click to set start of line')
+      return 'placeLine'
+    })
   }
 
   const handlePointAdd = (point: PointData) => {
@@ -67,10 +81,9 @@ export default function App() {
       setMessage('Click to set end of line')
     } else {
       setLines((prev) => [...prev, { start: lineStart, end: point }])
-      setLineStart(null)
-      setTempLineEnd(null)
-      setMode('idle')
-      setMessage('Line added')
+      setLineStart(point)
+      setTempLineEnd(point)
+      setMessage('Click to set end of line')
     }
   }
 
@@ -79,6 +92,14 @@ export default function App() {
     setLineStart(null)
     setTempLineEnd(null)
     setMessage(null)
+  }
+
+  const cancelLineChain = () => {
+    setLineStart(null)
+    setTempLineEnd(null)
+    if (mode === 'placeLine') {
+      setMessage('Click to set start of line')
+    }
   }
 
   useEffect(() => {
@@ -92,8 +113,10 @@ export default function App() {
     <div className="app">
       <ToolPanel
         onAddPlane={addPlane}
-        onPlacePoint={enablePointPlacement}
-        onDrawLine={enableLineDrawing}
+        pointEnabled={mode === 'placePoint'}
+        onTogglePoint={togglePointPlacement}
+        lineEnabled={mode === 'placeLine'}
+        onToggleLine={toggleLineDrawing}
         moveEnabled={mode === 'move'}
         onToggleMove={toggleMove}
       />
@@ -107,6 +130,7 @@ export default function App() {
         onAddLinePoint={handleLinePoint}
         onUpdateTempLineEnd={setTempLineEnd}
         onCancelPointPlacement={cancelPointPlacement}
+        onCancelLineChain={cancelLineChain}
         onCancelMove={cancelMove}
       />
       {message && <div className="message">{message}</div>}
