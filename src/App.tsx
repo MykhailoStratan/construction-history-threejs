@@ -98,16 +98,6 @@ export default function App() {
 
   return (
     <div className="app">
-      <HeaderMenu />
-      <ToolPanel
-        onAddPlane={addPlane}
-        pointEnabled={mode === 'placePoint'}
-        onTogglePoint={togglePointPlacement}
-        lineEnabled={mode === 'placeLine'}
-        onToggleLine={toggleLineDrawing}
-        moveEnabled={mode === 'move'}
-        onToggleMove={toggleMove}
-      />
       <ThreeScene
         planes={planes}
         points={points}
@@ -121,6 +111,31 @@ export default function App() {
         onCancelLineChain={cancelLineChain}
         onCancelMove={cancelMove}
       />
+      <HeaderMenu />
+      <ToolPanel
+        onAddPlane={addPlane}
+        pointEnabled={mode === 'placePoint'}
+        onTogglePoint={togglePointPlacement}
+        lineEnabled={mode === 'placeLine'}
+        onToggleLine={toggleLineDrawing}
+        moveEnabled={mode === 'move'}
+        onToggleMove={toggleMove}
+      />
+      <section id="home" className="menu-section">
+        <h2>Home</h2>
+      </section>
+      <section id="services" className="menu-section">
+        <h2>Services</h2>
+      </section>
+      <section id="prices" className="menu-section">
+        <h2>Prices</h2>
+      </section>
+      <section id="contacts" className="menu-section">
+        <h2>Contacts</h2>
+      </section>
+      <section id="about" className="menu-section">
+        <h2>About</h2>
+      </section>
       {message && <div className="message">{message}</div>}
     </div>
   )
