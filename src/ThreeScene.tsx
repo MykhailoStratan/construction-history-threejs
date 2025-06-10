@@ -5,6 +5,7 @@ import type { JSX } from 'react'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { DoubleSide, Object3D, Vector3, Quaternion } from 'three'
 import type { BufferGeometry, BufferAttribute } from 'three'
+import type { LineData, LineEnd, PointData } from './types'
 
 
 function Box({
@@ -151,21 +152,6 @@ function Plane({
       />
     </mesh>
   )
-}
-interface PointData {
-  objectId: string
-  position: [number, number, number]
-  normal: [number, number, number]
-}
-
-interface LineEnd {
-  objectId: string
-  position: [number, number, number]
-}
-
-interface LineData {
-  start: LineEnd
-  end: LineEnd
 }
 
 function PointObject({ point, objectMap }: { point: PointData; objectMap: React.MutableRefObject<Record<string, Object3D | null>> }) {
