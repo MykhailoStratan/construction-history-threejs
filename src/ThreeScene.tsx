@@ -217,10 +217,66 @@ function LineObject({ line, objectMap }: { line: LineData; objectMap: React.Muta
   )
 }
 
+function ModelObject({
+  object,
+  objectId,
+  onSelect,
+  mode,
+  onAddPoint,
+  onAddLinePoint,
+  onUpdateTempLineEnd,
+  registerObject,
+}: {
+  object: Object3D
+  objectId: string
+  onSelect: (obj: Object3D) => void
+  mode: 'select' | 'placePoint' | 'placeLine'
+  onAddPoint: (p: PointData) => void
+  onAddLinePoint: (p: LineEnd) => void
+  onUpdateTempLineEnd: (p: LineEnd) => void
+  registerObject: (id: string, obj: Object3D | null) => void
+}) {
+  const ref = useRef<Object3D>(null!)
+  useEffect(() => {
+    registerObject(objectId, ref.current)
+    return () => registerObject(objectId, null)
+  }, [objectId, registerObject])
+  return (
+    <group
+      ref={ref}
+      onPointerDown={(e) => {
+        e.stopPropagation()
+        const local = ref.current.worldToLocal(e.point.clone()).toArray() as [number, number, number]
+        if (mode === 'placePoint') {
+          if (e.button !== 0) return
+          const normal = e.face?.normal?.clone()
+          if (normal) {
+            onAddPoint({ objectId, position: local, normal: [normal.x, normal.y, normal.z] })
+          }
+        } else if (mode === 'placeLine') {
+          if (e.button !== 0) return
+          onAddLinePoint({ objectId, position: local })
+        } else {
+          onSelect(ref.current)
+        }
+      }}
+      onPointerMove={(e) => {
+        if (mode === 'placeLine') {
+          const localMove = ref.current.worldToLocal(e.point.clone()).toArray() as [number, number, number]
+          onUpdateTempLineEnd({ objectId, position: localMove })
+        }
+      }}
+    >
+      <primitive object={object} />
+    </group>
+  )
+}
+
 interface ThreeSceneProps {
   planes: number[]
   points: PointData[]
   lines: LineData[]
+  models: Object3D[]
   tempLine: { start: LineEnd | null; end: LineEnd | null }
   mode: 'select' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
@@ -233,6 +289,7 @@ export default function ThreeScene({
   planes,
   points,
   lines,
+  models,
   tempLine,
   mode,
   onAddPoint,
@@ -291,6 +348,19 @@ export default function ThreeScene({
         onUpdateTempLineEnd={onUpdateTempLineEnd}
         registerObject={registerObject}
       />
+      {models.map((m, idx) => (
+        <ModelObject
+          key={idx}
+          objectId={`model-${idx}`}
+          object={m}
+          onSelect={setSelected}
+          mode={mode}
+          onAddPoint={onAddPoint}
+          onAddLinePoint={onAddLinePoint}
+          onUpdateTempLineEnd={onUpdateTempLineEnd}
+          registerObject={registerObject}
+        />
+      ))}
       {planes.map((id) => (
         <Plane
           key={id}
