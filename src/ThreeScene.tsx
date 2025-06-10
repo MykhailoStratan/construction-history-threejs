@@ -154,12 +154,16 @@ export default function ThreeScene({ planes, points, mode, onAddPoint }: ThreeSc
         />
       ))}
       {points.map((p, idx) => {
+        const normalVec = new Vector3(...p.normal).normalize()
         const quaternion = new Quaternion().setFromUnitVectors(
           new Vector3(0, 0, 1),
-          new Vector3(...p.normal).normalize(),
+          normalVec,
         )
+        const position = new Vector3(...p.position)
+          .add(normalVec.clone().multiplyScalar(0.01))
+          .toArray()
         return (
-          <mesh key={idx} position={p.position} quaternion={quaternion}>
+          <mesh key={idx} position={position} quaternion={quaternion}>
             <circleGeometry args={[0.1, 16]} />
             <meshStandardMaterial color="red" side={DoubleSide} />
           </mesh>
