@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { IFCLoader } from 'web-ifc-three/IFCLoader.js'
+import type { Object3D } from 'three'
 import ThreeScene from './ThreeScene'
 import ToolPanel from './ToolPanel'
 import './App.css'
 
 export default function App() {
   const [planes, setPlanes] = useState<number[]>([])
+  const [models, setModels] = useState<Object3D[]>([])
   interface PointData {
     position: [number, number, number]
     normal: [number, number, number]
@@ -27,6 +31,32 @@ export default function App() {
     'select',
   )
   const [message, setMessage] = useState<string | null>(null)
+
+  const handleModelUpload = (file: File) => {
+    const extension = file.name.split('.').pop()?.toLowerCase()
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const arrayBuffer = reader.result as ArrayBuffer
+      try {
+        if (extension === 'ifc') {
+          const loader = new IFCLoader()
+          await loader.ifcManager.setWasmPath('')
+          const ifcModel = await loader.parse(arrayBuffer)
+          setModels((prev) => [...prev, ifcModel])
+        } else {
+          const loader = new GLTFLoader()
+          loader.parse(arrayBuffer, '', (gltf) => {
+            setModels((prev) => [...prev, gltf.scene])
+          })
+        }
+        setMessage('Model uploaded')
+      } catch (error) {
+        console.error(error)
+        setMessage('Failed to load model')
+      }
+    }
+    reader.readAsArrayBuffer(file)
+  }
 
   const addPlane = () => {
     setPlanes((prev) => [...prev, prev.length])
@@ -84,6 +114,7 @@ export default function App() {
         onAddPlane={addPlane}
         onPlacePoint={enablePointPlacement}
         onDrawLine={enableLineDrawing}
+        onUploadModel={handleModelUpload}
       />
       <ThreeScene
         planes={planes}
@@ -95,6 +126,7 @@ export default function App() {
         onAddLinePoint={handleLinePoint}
         onUpdateTempLineEnd={setTempLineEnd}
         onCancelPointPlacement={cancelPointPlacement}
+        models={models}
       />
       {message && <div className="message">{message}</div>}
     </div>
