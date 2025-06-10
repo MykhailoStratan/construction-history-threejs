@@ -38,3 +38,7 @@
   justify-content: center;
   cursor: pointer;
 }
+
+.tool-panel button.active {
+  border-color: #646cff;
+}

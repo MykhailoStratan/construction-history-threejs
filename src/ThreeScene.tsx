@@ -21,7 +21,7 @@ function Box({
   objectId: string
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'select' | 'placePoint' | 'placeLine'
+  mode: 'move' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -57,7 +57,7 @@ function Box({
         } else if (mode === 'placeLine') {
           if (e.button !== 0) return
           onAddLinePoint({ objectId: objectId, position: local })
-        } else {
+        } else if (mode === 'move') {
           onSelect(ref.current)
         }
       }}
@@ -94,7 +94,7 @@ function Plane({
   objectId: string
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'select' | 'placePoint' | 'placeLine'
+  mode: 'move' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -129,7 +129,7 @@ function Plane({
         } else if (mode === 'placeLine') {
           if (e.button !== 0) return
           onAddLinePoint({ objectId: objectId, position: local })
-        } else {
+        } else if (mode === 'move') {
           onSelect(ref.current)
         }
       }}
@@ -222,7 +222,7 @@ interface ThreeSceneProps {
   points: PointData[]
   lines: LineData[]
   tempLine: { start: LineEnd | null; end: LineEnd | null }
-  mode: 'select' | 'placePoint' | 'placeLine'
+  mode: 'move' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -316,7 +316,7 @@ export default function ThreeScene({
         if (!objectMap.current[tempLine.start.objectId] || !objectMap.current[tempLine.end.objectId]) return null
         return <LineObject line={{ start: tempLine.start, end: tempLine.end }} objectMap={objectMap} />
       })()}
-      {selected && (
+      {selected && mode === 'move' && (
         <TransformControls
           object={selected}
           mode="translate"
