@@ -11,11 +11,11 @@ export default function HeaderMenu() {
         ☰
       </button>
       <nav className={`menu-items${open ? ' open' : ''}`} onClick={() => setOpen(false)}>
-        <button>Home</button>
-        <button>Services</button>
-        <button>Prices</button>
-        <button>Contacts</button>
-        <button>About</button>
+        <a href="#home">Home</a>
+        <a href="#services">Services</a>
+        <a href="#prices">Prices</a>
+        <a href="#contacts">Contacts</a>
+        <a href="#about">About</a>
       </nav>
     </header>
   )
