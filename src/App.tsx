@@ -6,23 +6,25 @@ import './App.css'
 export default function App() {
   const [planes, setPlanes] = useState<number[]>([])
   interface PointData {
+    objectId: string
     position: [number, number, number]
     normal: [number, number, number]
   }
 
+  interface LineEnd {
+    objectId: string
+    position: [number, number, number]
+  }
+
   interface LineData {
-    start: [number, number, number]
-    end: [number, number, number]
+    start: LineEnd
+    end: LineEnd
   }
 
   const [points, setPoints] = useState<PointData[]>([])
   const [lines, setLines] = useState<LineData[]>([])
-  const [lineStart, setLineStart] = useState<[number, number, number] | null>(
-    null,
-  )
-  const [tempLineEnd, setTempLineEnd] = useState<[number, number, number] | null>(
-    null,
-  )
+  const [lineStart, setLineStart] = useState<LineEnd | null>(null)
+  const [tempLineEnd, setTempLineEnd] = useState<LineEnd | null>(null)
   const [mode, setMode] = useState<'select' | 'placePoint' | 'placeLine'>(
     'select',
   )
@@ -50,7 +52,7 @@ export default function App() {
     setMessage('Point added')
   }
 
-  const handleLinePoint = (point: [number, number, number]) => {
+  const handleLinePoint = (point: LineEnd) => {
     if (!lineStart) {
       setLineStart(point)
       setTempLineEnd(point)
