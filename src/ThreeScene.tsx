@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, TransformControls } from '@react-three/drei'
+import { OrbitControls, TransformControls, Html } from '@react-three/drei'
 import { useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
@@ -9,10 +9,14 @@ import { DoubleSide, Object3D } from 'three'
 function Box({
   onSelect,
   selectedObject,
+  mode,
+  onAddPoint,
   ...props
 }: JSX.IntrinsicElements['mesh'] & {
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
+  mode: 'select' | 'placePoint'
+  onAddPoint: (pos: [number, number, number]) => void
 }) {
   const ref = useRef<Object3D>(null!)
   const isSelected = selectedObject != null && selectedObject === ref.current
@@ -22,7 +26,11 @@ function Box({
       {...props}
       onPointerDown={(e) => {
         e.stopPropagation()
-        onSelect(ref.current)
+        if (mode === 'placePoint') {
+          onAddPoint([e.point.x, e.point.y, e.point.z])
+        } else {
+          onSelect(ref.current)
+        }
       }}
     >
       <boxGeometry args={[1, 1, 1]} />
@@ -38,10 +46,14 @@ function Box({
 function Plane({
   onSelect,
   selectedObject,
+  mode,
+  onAddPoint,
   ...props
 }: JSX.IntrinsicElements['mesh'] & {
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
+  mode: 'select' | 'placePoint'
+  onAddPoint: (pos: [number, number, number]) => void
 }) {
   const ref = useRef<Object3D>(null!)
   const isSelected = selectedObject != null && selectedObject === ref.current
@@ -52,7 +64,11 @@ function Plane({
       {...props}
       onPointerDown={(e) => {
         e.stopPropagation()
-        onSelect(ref.current)
+        if (mode === 'placePoint') {
+          onAddPoint([e.point.x, e.point.y, e.point.z])
+        } else {
+          onSelect(ref.current)
+        }
       }}
     >
       <planeGeometry args={[10, 10]} />
@@ -67,9 +83,12 @@ function Plane({
 }
 interface ThreeSceneProps {
   planes: number[]
+  points: [number, number, number][]
+  mode: 'select' | 'placePoint'
+  onAddPoint: (point: [number, number, number]) => void
 }
 
-export default function ThreeScene({ planes }: ThreeSceneProps) {
+export default function ThreeScene({ planes, points, mode, onAddPoint }: ThreeSceneProps) {
   const [selected, setSelected] = useState<Object3D | null>(null)
   const orbitRef = useRef<OrbitControlsImpl | null>(null)
 
@@ -97,9 +116,26 @@ export default function ThreeScene({ planes }: ThreeSceneProps) {
     >
       <ambientLight />
       <pointLight position={[10, 10, 10]} />
-      <Box onSelect={setSelected} selectedObject={selected} />
+      <Box
+        onSelect={setSelected}
+        selectedObject={selected}
+        mode={mode}
+        onAddPoint={onAddPoint}
+      />
       {planes.map((id) => (
-        <Plane key={id} position={[0, 0, 0]} onSelect={setSelected} selectedObject={selected} />
+        <Plane
+          key={id}
+          position={[0, 0, 0]}
+          onSelect={setSelected}
+          selectedObject={selected}
+          mode={mode}
+          onAddPoint={onAddPoint}
+        />
+      ))}
+      {points.map((p, idx) => (
+        <Html key={idx} position={p} center>
+          <div className="point" />
+        </Html>
       ))}
       {selected && (
         <TransformControls
