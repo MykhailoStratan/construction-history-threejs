@@ -26,8 +26,12 @@ export default function App() {
 
   const handlePointAdd = (point: PointData) => {
     setPoints((prev) => [...prev, point])
-    setMode('select')
     setMessage('Point added')
+  }
+
+  const cancelPointPlacement = () => {
+    setMode('select')
+    setMessage(null)
   }
 
   useEffect(() => {
@@ -45,6 +49,7 @@ export default function App() {
         points={points}
         mode={mode}
         onAddPoint={handlePointAdd}
+        onCancelPointPlacement={cancelPointPlacement}
       />
       {message && <div className="message">{message}</div>}
     </div>

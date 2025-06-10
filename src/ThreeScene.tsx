@@ -27,6 +27,7 @@ function Box({
       onPointerDown={(e) => {
         e.stopPropagation()
         if (mode === 'placePoint') {
+          if (e.button !== 0) return
           const normal = e.face?.normal
             ?.clone()
             .transformDirection(e.object.matrixWorld)
@@ -73,6 +74,7 @@ function Plane({
       onPointerDown={(e) => {
         e.stopPropagation()
         if (mode === 'placePoint') {
+          if (e.button !== 0) return
           const normal = e.face?.normal
             ?.clone()
             .transformDirection(e.object.matrixWorld)
@@ -107,9 +109,16 @@ interface ThreeSceneProps {
   points: PointData[]
   mode: 'select' | 'placePoint'
   onAddPoint: (point: PointData) => void
+  onCancelPointPlacement: () => void
 }
 
-export default function ThreeScene({ planes, points, mode, onAddPoint }: ThreeSceneProps) {
+export default function ThreeScene({
+  planes,
+  points,
+  mode,
+  onAddPoint,
+  onCancelPointPlacement,
+}: ThreeSceneProps) {
   const [selected, setSelected] = useState<Object3D | null>(null)
   const orbitRef = useRef<OrbitControlsImpl | null>(null)
 
@@ -120,11 +129,14 @@ export default function ThreeScene({ planes, points, mode, onAddPoint }: ThreeSc
 
   useEffect(() => {
     function handleKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') setSelected(null)
+      if (event.key === 'Escape') {
+        setSelected(null)
+        if (mode === 'placePoint') onCancelPointPlacement()
+      }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [])
+  }, [mode, onCancelPointPlacement])
 
   return (
     <Canvas
@@ -132,8 +144,12 @@ export default function ThreeScene({ planes, points, mode, onAddPoint }: ThreeSc
       onContextMenu={(e) => {
         e.preventDefault()
         setSelected(null)
+        if (mode === 'placePoint') onCancelPointPlacement()
       }}
-      onPointerMissed={() => setSelected(null)}
+      onPointerMissed={() => {
+        setSelected(null)
+        if (mode === 'placePoint') onCancelPointPlacement()
+      }}
     >
       <ambientLight />
       <pointLight position={[10, 10, 10]} />
