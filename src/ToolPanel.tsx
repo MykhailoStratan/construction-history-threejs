@@ -15,14 +15,14 @@ export default function ToolPanel({
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="tool-panel-container">
-      <div className={`tool-panel${open ? ' open' : ''}`}>
+    <div className={`tool-panel-container${open ? ' open' : ''}`}>
+      <div className="tool-panel">
         <button onClick={onAddPlane}>Plane</button>
         <button onClick={onPlacePoint}>Point</button>
         <button onClick={onDrawLine}>Line</button>
       </div>
       <div
-        className={`panel-toggle${open ? ' open' : ''}`}
+        className="panel-toggle"
         onClick={() => setOpen(!open)}
       >
         {open ? '◀' : '▶'}
