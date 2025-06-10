@@ -6,6 +6,7 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { DoubleSide, Object3D, Vector3, Quaternion } from 'three'
 import type { BufferGeometry, BufferAttribute } from 'three'
 import type { LineData, LineEnd, PointData } from './types'
+import { useObjectInteractions } from './useObjectInteractions'
 
 
 function Box({
@@ -28,48 +29,27 @@ function Box({
   onUpdateTempLineEnd: (point: LineEnd) => void
   registerObject: (id: string, obj: Object3D | null) => void
 }) {
-  const ref = useRef<Object3D>(null!)
-  useEffect(() => {
-    registerObject(objectId, ref.current)
-    return () => registerObject(objectId, null)
-  }, [objectId, registerObject])
-  const isSelected = selectedObject != null && selectedObject === ref.current
+  const {
+    ref,
+    isSelected,
+    handlePointerDown,
+    handlePointerMove,
+  } = useObjectInteractions({
+    objectId,
+    onSelect,
+    selectedObject,
+    mode,
+    onAddPoint,
+    onAddLinePoint,
+    onUpdateTempLineEnd,
+    registerObject,
+  })
   return (
     <mesh
       ref={ref}
       {...props}
-      onPointerDown={(e) => {
-        e.stopPropagation()
-        const local = ref.current.worldToLocal(e.point.clone()).toArray() as [
-          number,
-          number,
-          number,
-        ]
-        if (mode === 'placePoint') {
-          if (e.button !== 0) return
-          const normal = e.face?.normal?.clone()
-          if (normal) {
-            onAddPoint({
-              objectId: objectId,
-              position: local,
-              normal: [normal.x, normal.y, normal.z],
-            })
-          }
-        } else if (mode === 'placeLine') {
-          if (e.button !== 0) return
-          onAddLinePoint({ objectId: objectId, position: local })
-        } else if (mode === 'move') {
-          onSelect(ref.current)
-        }
-      }}
-      onPointerMove={(e) => {
-        if (mode === 'placeLine') {
-          const localMove = ref.current
-            .worldToLocal(e.point.clone())
-            .toArray() as [number, number, number]
-          onUpdateTempLineEnd({ objectId: objectId, position: localMove })
-        }
-      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
     >
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial
@@ -101,47 +81,28 @@ function Plane({
   onUpdateTempLineEnd: (point: LineEnd) => void
   registerObject: (id: string, obj: Object3D | null) => void
 }) {
-  const ref = useRef<Object3D>(null!)
-  useEffect(() => {
-    registerObject(objectId, ref.current)
-    return () => registerObject(objectId, null)
-  }, [objectId, registerObject])
-  const isSelected = selectedObject != null && selectedObject === ref.current
+  const {
+    ref,
+    isSelected,
+    handlePointerDown,
+    handlePointerMove,
+  } = useObjectInteractions({
+    objectId,
+    onSelect,
+    selectedObject,
+    mode,
+    onAddPoint,
+    onAddLinePoint,
+    onUpdateTempLineEnd,
+    registerObject,
+  })
   return (
     <mesh
       ref={ref}
       rotation={[-Math.PI / 2, 0, 0]}
       {...props}
-      onPointerDown={(e) => {
-        e.stopPropagation()
-        const local = ref.current
-          .worldToLocal(e.point.clone())
-          .toArray() as [number, number, number]
-        if (mode === 'placePoint') {
-          if (e.button !== 0) return
-          const normal = e.face?.normal?.clone()
-          if (normal) {
-            onAddPoint({
-              objectId: objectId,
-              position: local,
-              normal: [normal.x, normal.y, normal.z],
-            })
-          }
-        } else if (mode === 'placeLine') {
-          if (e.button !== 0) return
-          onAddLinePoint({ objectId: objectId, position: local })
-        } else if (mode === 'move') {
-          onSelect(ref.current)
-        }
-      }}
-      onPointerMove={(e) => {
-        if (mode === 'placeLine') {
-          const localMove = ref.current
-            .worldToLocal(e.point.clone())
-            .toArray() as [number, number, number]
-          onUpdateTempLineEnd({ objectId: objectId, position: localMove })
-        }
-      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
     >
       <planeGeometry args={[10, 10]} />
       <meshStandardMaterial
