@@ -3,16 +3,20 @@ import './ToolPanel.css'
 
 interface ToolPanelProps {
   onAddPlane: () => void
-  onPlacePoint: () => void
-  onDrawLine: () => void
+  pointEnabled: boolean
+  onTogglePoint: () => void
+  lineEnabled: boolean
+  onToggleLine: () => void
   moveEnabled: boolean
   onToggleMove: () => void
 }
 
 export default function ToolPanel({
   onAddPlane,
-  onPlacePoint,
-  onDrawLine,
+  pointEnabled,
+  onTogglePoint,
+  lineEnabled,
+  onToggleLine,
   moveEnabled,
   onToggleMove,
 }: ToolPanelProps) {
@@ -28,8 +32,18 @@ export default function ToolPanel({
           Move
         </button>
         <button onClick={onAddPlane}>Plane</button>
-        <button onClick={onPlacePoint}>Point</button>
-        <button onClick={onDrawLine}>Line</button>
+        <button
+          className={pointEnabled ? 'active' : ''}
+          onClick={onTogglePoint}
+        >
+          Point
+        </button>
+        <button
+          className={lineEnabled ? 'active' : ''}
+          onClick={onToggleLine}
+        >
+          Line
+        </button>
       </div>
       <div
         className="panel-toggle"
