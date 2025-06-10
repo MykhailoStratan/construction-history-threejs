@@ -8,8 +8,14 @@
 .menu-section {
   position: relative;
   z-index: 1;
-  min-height: 100vh;
-  padding-top: 4rem;
+  width: 80vw;
+  height: 80vh;
+  margin: 10vh auto;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .message {
