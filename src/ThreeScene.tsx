@@ -21,7 +21,7 @@ function Box({
   objectId: string
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'move' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -94,7 +94,7 @@ function Plane({
   objectId: string
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'move' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -222,11 +222,12 @@ interface ThreeSceneProps {
   points: PointData[]
   lines: LineData[]
   tempLine: { start: LineEnd | null; end: LineEnd | null }
-  mode: 'move' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
   onCancelPointPlacement: () => void
+  onCancelMove: () => void
 }
 
 export default function ThreeScene({
@@ -239,6 +240,7 @@ export default function ThreeScene({
   onAddLinePoint,
   onUpdateTempLineEnd,
   onCancelPointPlacement,
+  onCancelMove,
 }: ThreeSceneProps) {
   const [selected, setSelected] = useState<Object3D | null>(null)
   const orbitRef = useRef<OrbitControlsImpl | null>(null)
@@ -256,13 +258,16 @@ export default function ThreeScene({
     function handleKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setSelected(null)
-        if (mode === 'placePoint' || mode === 'placeLine')
+        if (mode === 'placePoint' || mode === 'placeLine') {
           onCancelPointPlacement()
+        } else if (mode === 'move') {
+          onCancelMove()
+        }
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [mode, onCancelPointPlacement])
+  }, [mode, onCancelPointPlacement, onCancelMove])
 
   return (
     <Canvas

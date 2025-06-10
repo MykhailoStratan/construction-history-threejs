@@ -25,7 +25,8 @@ export default function App() {
   const [lines, setLines] = useState<LineData[]>([])
   const [lineStart, setLineStart] = useState<LineEnd | null>(null)
   const [tempLineEnd, setTempLineEnd] = useState<LineEnd | null>(null)
-  const [mode, setMode] = useState<'move' | 'placePoint' | 'placeLine'>('move')
+  const [mode, setMode] =
+    useState<'idle' | 'move' | 'placePoint' | 'placeLine'>('idle')
   const [message, setMessage] = useState<string | null>(null)
 
   const addPlane = () => {
@@ -33,9 +34,13 @@ export default function App() {
     setMessage('Plane added')
   }
 
-  const enableMove = () => {
-    setMode('move')
+  const toggleMove = () => {
+    setMode((prev) => (prev === 'move' ? 'idle' : 'move'))
     setMessage(null)
+  }
+
+  const cancelMove = () => {
+    setMode('idle')
   }
 
   const enablePointPlacement = () => {
@@ -64,13 +69,13 @@ export default function App() {
       setLines((prev) => [...prev, { start: lineStart, end: point }])
       setLineStart(null)
       setTempLineEnd(null)
-      setMode('move')
+      setMode('idle')
       setMessage('Line added')
     }
   }
 
   const cancelPointPlacement = () => {
-    setMode('move')
+    setMode('idle')
     setLineStart(null)
     setTempLineEnd(null)
     setMessage(null)
@@ -90,7 +95,7 @@ export default function App() {
         onPlacePoint={enablePointPlacement}
         onDrawLine={enableLineDrawing}
         moveEnabled={mode === 'move'}
-        onToggleMove={enableMove}
+        onToggleMove={toggleMove}
       />
       <ThreeScene
         planes={planes}
@@ -102,6 +107,7 @@ export default function App() {
         onAddLinePoint={handleLinePoint}
         onUpdateTempLineEnd={setTempLineEnd}
         onCancelPointPlacement={cancelPointPlacement}
+        onCancelMove={cancelMove}
       />
       {message && <div className="message">{message}</div>}
     </div>
