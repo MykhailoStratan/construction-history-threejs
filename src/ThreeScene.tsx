@@ -1,9 +1,10 @@
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, TransformControls } from '@react-three/drei'
 import { useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { DoubleSide, Object3D, Vector3, Quaternion } from 'three'
+import type { BufferGeometry, BufferAttribute } from 'three'
 
 
 function Box({
@@ -167,6 +168,55 @@ interface LineData {
   end: LineEnd
 }
 
+function PointObject({ point, objectMap }: { point: PointData; objectMap: React.MutableRefObject<Record<string, Object3D | null>> }) {
+  const ref = useRef<Object3D>(null!)
+  useFrame(() => {
+    const obj = objectMap.current[point.objectId]
+    if (!obj) return
+    const normalVec = new Vector3(...point.normal)
+      .applyQuaternion(obj.quaternion)
+      .normalize()
+    const quaternion = new Quaternion().setFromUnitVectors(
+      new Vector3(0, 0, 1),
+      normalVec,
+    )
+    const position = new Vector3(...point.position)
+      .applyMatrix4(obj.matrixWorld)
+      .add(normalVec.clone().multiplyScalar(0.01))
+    ref.current.position.copy(position)
+    ref.current.quaternion.copy(quaternion)
+  })
+  return (
+    <mesh ref={ref}>
+      <circleGeometry args={[0.01, 16]} />
+      <meshStandardMaterial color="red" side={DoubleSide} />
+    </mesh>
+  )
+}
+
+function LineObject({ line, objectMap }: { line: LineData; objectMap: React.MutableRefObject<Record<string, Object3D | null>> }) {
+  const geomRef = useRef<BufferGeometry>(null!)
+  useFrame(() => {
+    const startObj = objectMap.current[line.start.objectId]
+    const endObj = objectMap.current[line.end.objectId]
+    if (!startObj || !endObj) return
+    const start = new Vector3(...line.start.position).applyMatrix4(startObj.matrixWorld)
+    const end = new Vector3(...line.end.position).applyMatrix4(endObj.matrixWorld)
+    const attr = geomRef.current.attributes.position as BufferAttribute
+    attr.setXYZ(0, start.x, start.y, start.z)
+    attr.setXYZ(1, end.x, end.y, end.z)
+    attr.needsUpdate = true
+  })
+  return (
+    <line>
+      <bufferGeometry ref={geomRef}>
+        <bufferAttribute attach="attributes-position" args={[new Float32Array(6), 3]} count={2} />
+      </bufferGeometry>
+      <lineBasicMaterial color="yellow" />
+    </line>
+  )
+}
+
 interface ThreeSceneProps {
   planes: number[]
   points: PointData[]
@@ -255,70 +305,16 @@ export default function ThreeScene({
           registerObject={registerObject}
         />
       ))}
-      {points.map((p, idx) => {
-        const obj = objectMap.current[p.objectId]
-        if (!obj) return null
-        const normalVec = new Vector3(...p.normal)
-          .applyQuaternion(obj.quaternion)
-          .normalize()
-        const quaternion = new Quaternion().setFromUnitVectors(
-          new Vector3(0, 0, 1),
-          normalVec,
-        )
-        const position = new Vector3(...p.position)
-          .applyMatrix4(obj.matrixWorld)
-          .add(normalVec.clone().multiplyScalar(0.01))
-          .toArray()
-        return (
-          <mesh key={idx} position={position} quaternion={quaternion}>
-            <circleGeometry args={[0.01, 16]} />
-            <meshStandardMaterial color="red" side={DoubleSide} />
-          </mesh>
-        )
-      })}
+      {points.map((p, idx) => (
+        <PointObject key={idx} point={p} objectMap={objectMap} />
+      ))}
       {lines.map((l, idx) => {
-        const startObj = objectMap.current[l.start.objectId]
-        const endObj = objectMap.current[l.end.objectId]
-        if (!startObj || !endObj) return null
-        const start = new Vector3(...l.start.position).applyMatrix4(
-          startObj.matrixWorld,
-        )
-        const end = new Vector3(...l.end.position).applyMatrix4(endObj.matrixWorld)
-        return (
-          <line key={idx}>
-            <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                args={[new Float32Array([...start.toArray(), ...end.toArray()]), 3]}
-                count={2}
-              />
-            </bufferGeometry>
-            <lineBasicMaterial color="yellow" />
-          </line>
-        )
+        if (!objectMap.current[l.start.objectId] || !objectMap.current[l.end.objectId]) return null
+        return <LineObject key={idx} line={l} objectMap={objectMap} />
       })}
       {tempLine.start && tempLine.end && (() => {
-        const startObj = objectMap.current[tempLine.start.objectId]
-        const endObj = objectMap.current[tempLine.end.objectId]
-        if (!startObj || !endObj) return null
-        const start = new Vector3(...tempLine.start.position).applyMatrix4(
-          startObj.matrixWorld,
-        )
-        const end = new Vector3(...tempLine.end.position).applyMatrix4(
-          endObj.matrixWorld,
-        )
-        return (
-          <line>
-            <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                args={[new Float32Array([...start.toArray(), ...end.toArray()]), 3]}
-                count={2}
-              />
-            </bufferGeometry>
-            <lineBasicMaterial color="yellow" linewidth={1} />
-          </line>
-        )
+        if (!objectMap.current[tempLine.start.objectId] || !objectMap.current[tempLine.end.objectId]) return null
+        return <LineObject line={{ start: tempLine.start, end: tempLine.end }} objectMap={objectMap} />
       })()}
       {selected && (
         <TransformControls
