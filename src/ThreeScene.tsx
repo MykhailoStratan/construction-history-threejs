@@ -11,12 +11,16 @@ function Box({
   selectedObject,
   mode,
   onAddPoint,
+  onAddLinePoint,
+  onUpdateTempLineEnd,
   ...props
 }: JSX.IntrinsicElements['mesh'] & {
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'select' | 'placePoint'
+  mode: 'select' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
+  onAddLinePoint: (point: [number, number, number]) => void
+  onUpdateTempLineEnd: (point: [number, number, number]) => void
 }) {
   const ref = useRef<Object3D>(null!)
   const isSelected = selectedObject != null && selectedObject === ref.current
@@ -37,8 +41,16 @@ function Box({
               normal: [normal.x, normal.y, normal.z],
             })
           }
+        } else if (mode === 'placeLine') {
+          if (e.button !== 0) return
+          onAddLinePoint([e.point.x, e.point.y, e.point.z])
         } else {
           onSelect(ref.current)
+        }
+      }}
+      onPointerMove={(e) => {
+        if (mode === 'placeLine') {
+          onUpdateTempLineEnd([e.point.x, e.point.y, e.point.z])
         }
       }}
     >
@@ -57,12 +69,16 @@ function Plane({
   selectedObject,
   mode,
   onAddPoint,
+  onAddLinePoint,
+  onUpdateTempLineEnd,
   ...props
 }: JSX.IntrinsicElements['mesh'] & {
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'select' | 'placePoint'
+  mode: 'select' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
+  onAddLinePoint: (point: [number, number, number]) => void
+  onUpdateTempLineEnd: (point: [number, number, number]) => void
 }) {
   const ref = useRef<Object3D>(null!)
   const isSelected = selectedObject != null && selectedObject === ref.current
@@ -84,8 +100,16 @@ function Plane({
               normal: [normal.x, normal.y, normal.z],
             })
           }
+        } else if (mode === 'placeLine') {
+          if (e.button !== 0) return
+          onAddLinePoint([e.point.x, e.point.y, e.point.z])
         } else {
           onSelect(ref.current)
+        }
+      }}
+      onPointerMove={(e) => {
+        if (mode === 'placeLine') {
+          onUpdateTempLineEnd([e.point.x, e.point.y, e.point.z])
         }
       }}
     >
@@ -104,19 +128,32 @@ interface PointData {
   normal: [number, number, number]
 }
 
+interface LineData {
+  start: [number, number, number] | null
+  end: [number, number, number] | null
+}
+
 interface ThreeSceneProps {
   planes: number[]
   points: PointData[]
-  mode: 'select' | 'placePoint'
+  lines: { start: [number, number, number]; end: [number, number, number] }[]
+  tempLine: LineData
+  mode: 'select' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
+  onAddLinePoint: (point: [number, number, number]) => void
+  onUpdateTempLineEnd: (point: [number, number, number]) => void
   onCancelPointPlacement: () => void
 }
 
 export default function ThreeScene({
   planes,
   points,
+  lines,
+  tempLine,
   mode,
   onAddPoint,
+  onAddLinePoint,
+  onUpdateTempLineEnd,
   onCancelPointPlacement,
 }: ThreeSceneProps) {
   const [selected, setSelected] = useState<Object3D | null>(null)
@@ -131,7 +168,8 @@ export default function ThreeScene({
     function handleKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setSelected(null)
-        if (mode === 'placePoint') onCancelPointPlacement()
+        if (mode === 'placePoint' || mode === 'placeLine')
+          onCancelPointPlacement()
       }
     }
     window.addEventListener('keydown', handleKey)
@@ -144,11 +182,13 @@ export default function ThreeScene({
       onContextMenu={(e) => {
         e.preventDefault()
         setSelected(null)
-        if (mode === 'placePoint') onCancelPointPlacement()
+        if (mode === 'placePoint' || mode === 'placeLine')
+          onCancelPointPlacement()
       }}
       onPointerMissed={() => {
         setSelected(null)
-        if (mode === 'placePoint') onCancelPointPlacement()
+        if (mode === 'placePoint' || mode === 'placeLine')
+          onCancelPointPlacement()
       }}
     >
       <ambientLight />
@@ -158,6 +198,8 @@ export default function ThreeScene({
         selectedObject={selected}
         mode={mode}
         onAddPoint={onAddPoint}
+        onAddLinePoint={onAddLinePoint}
+        onUpdateTempLineEnd={onUpdateTempLineEnd}
       />
       {planes.map((id) => (
         <Plane
@@ -167,6 +209,8 @@ export default function ThreeScene({
           selectedObject={selected}
           mode={mode}
           onAddPoint={onAddPoint}
+          onAddLinePoint={onAddLinePoint}
+          onUpdateTempLineEnd={onUpdateTempLineEnd}
         />
       ))}
       {points.map((p, idx) => {
@@ -185,6 +229,30 @@ export default function ThreeScene({
           </mesh>
         )
       })}
+      {lines.map((l, idx) => (
+        <line key={idx}>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              args={[new Float32Array([...l.start, ...l.end]), 3]}
+              count={2}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="yellow" />
+        </line>
+      ))}
+      {tempLine.start && tempLine.end && (
+        <line>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              args={[new Float32Array([...tempLine.start, ...tempLine.end]), 3]}
+              count={2}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="yellow" linewidth={1} />
+        </line>
+      )}
       {selected && (
         <TransformControls
           object={selected}
