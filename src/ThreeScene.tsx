@@ -21,7 +21,7 @@ function Box({
   objectId: string
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'select' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -57,7 +57,7 @@ function Box({
         } else if (mode === 'placeLine') {
           if (e.button !== 0) return
           onAddLinePoint({ objectId: objectId, position: local })
-        } else {
+        } else if (mode === 'move') {
           onSelect(ref.current)
         }
       }}
@@ -94,7 +94,7 @@ function Plane({
   objectId: string
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'select' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -129,7 +129,7 @@ function Plane({
         } else if (mode === 'placeLine') {
           if (e.button !== 0) return
           onAddLinePoint({ objectId: objectId, position: local })
-        } else {
+        } else if (mode === 'move') {
           onSelect(ref.current)
         }
       }}
@@ -222,11 +222,12 @@ interface ThreeSceneProps {
   points: PointData[]
   lines: LineData[]
   tempLine: { start: LineEnd | null; end: LineEnd | null }
-  mode: 'select' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
   onCancelPointPlacement: () => void
+  onCancelMove: () => void
 }
 
 export default function ThreeScene({
@@ -239,6 +240,7 @@ export default function ThreeScene({
   onAddLinePoint,
   onUpdateTempLineEnd,
   onCancelPointPlacement,
+  onCancelMove,
 }: ThreeSceneProps) {
   const [selected, setSelected] = useState<Object3D | null>(null)
   const orbitRef = useRef<OrbitControlsImpl | null>(null)
@@ -256,13 +258,16 @@ export default function ThreeScene({
     function handleKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setSelected(null)
-        if (mode === 'placePoint' || mode === 'placeLine')
+        if (mode === 'placePoint' || mode === 'placeLine') {
           onCancelPointPlacement()
+        } else if (mode === 'move') {
+          onCancelMove()
+        }
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [mode, onCancelPointPlacement])
+  }, [mode, onCancelPointPlacement, onCancelMove])
 
   return (
     <Canvas
@@ -316,7 +321,7 @@ export default function ThreeScene({
         if (!objectMap.current[tempLine.start.objectId] || !objectMap.current[tempLine.end.objectId]) return null
         return <LineObject line={{ start: tempLine.start, end: tempLine.end }} objectMap={objectMap} />
       })()}
-      {selected && (
+      {selected && mode === 'move' && (
         <TransformControls
           object={selected}
           mode="translate"
