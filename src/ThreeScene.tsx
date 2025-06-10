@@ -1,4 +1,4 @@
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, type ThreeEvent } from '@react-three/fiber'
 import { OrbitControls, TransformControls } from '@react-three/drei'
 import { useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
@@ -37,7 +37,7 @@ function Box({
     <mesh
       ref={ref}
       {...props}
-      onPointerDown={(e) => {
+      onPointerDown={(e: ThreeEvent<PointerEvent>) => {
         e.stopPropagation()
         const local = ref.current.worldToLocal(e.point.clone()).toArray() as [
           number,
@@ -61,7 +61,7 @@ function Box({
           onSelect(ref.current)
         }
       }}
-      onPointerMove={(e) => {
+      onPointerMove={(e: ThreeEvent<PointerEvent>) => {
         if (mode === 'placeLine') {
           const localMove = ref.current
             .worldToLocal(e.point.clone())
@@ -111,7 +111,7 @@ function Plane({
       ref={ref}
       rotation={[-Math.PI / 2, 0, 0]}
       {...props}
-      onPointerDown={(e) => {
+      onPointerDown={(e: ThreeEvent<PointerEvent>) => {
         e.stopPropagation()
         const local = ref.current
           .worldToLocal(e.point.clone())
@@ -133,7 +133,7 @@ function Plane({
           onSelect(ref.current)
         }
       }}
-      onPointerMove={(e) => {
+      onPointerMove={(e: ThreeEvent<PointerEvent>) => {
         if (mode === 'placeLine') {
           const localMove = ref.current
             .worldToLocal(e.point.clone())
@@ -150,6 +150,68 @@ function Plane({
         opacity={isSelected ? 0.8 : 1}
       />
     </mesh>
+  )
+}
+
+function UploadedModel({
+  object,
+  objectId,
+  onSelect,
+  mode,
+  onAddPoint,
+  onAddLinePoint,
+  onUpdateTempLineEnd,
+  registerObject,
+}: {
+  object: Object3D
+  objectId: string
+  onSelect: (obj: Object3D) => void
+  mode: 'select' | 'placePoint' | 'placeLine'
+  onAddPoint: (point: PointData) => void
+  onAddLinePoint: (point: LineEnd) => void
+  onUpdateTempLineEnd: (point: LineEnd) => void
+  registerObject: (id: string, obj: Object3D | null) => void
+}) {
+  useEffect(() => {
+    registerObject(objectId, object)
+    return () => registerObject(objectId, null)
+  }, [objectId, object, registerObject])
+  return (
+    <primitive
+      object={object}
+      onPointerDown={(e: ThreeEvent<PointerEvent>) => {
+        e.stopPropagation()
+        const local = object.worldToLocal(e.point.clone()).toArray() as [
+          number,
+          number,
+          number,
+        ]
+        if (mode === 'placePoint') {
+          if (e.button !== 0) return
+          const normal = e.face?.normal?.clone()
+          if (normal) {
+            onAddPoint({
+              objectId: objectId,
+              position: local,
+              normal: [normal.x, normal.y, normal.z],
+            })
+          }
+        } else if (mode === 'placeLine') {
+          if (e.button !== 0) return
+          onAddLinePoint({ objectId: objectId, position: local })
+        } else {
+          onSelect(object)
+        }
+      }}
+      onPointerMove={(e: ThreeEvent<PointerEvent>) => {
+        if (mode === 'placeLine') {
+          const localMove = object
+            .worldToLocal(e.point.clone())
+            .toArray() as [number, number, number]
+          onUpdateTempLineEnd({ objectId: objectId, position: localMove })
+        }
+      }}
+    />
   )
 }
 interface PointData {
@@ -227,6 +289,7 @@ interface ThreeSceneProps {
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
   onCancelPointPlacement: () => void
+  models: Object3D[]
 }
 
 export default function ThreeScene({
@@ -239,6 +302,7 @@ export default function ThreeScene({
   onAddLinePoint,
   onUpdateTempLineEnd,
   onCancelPointPlacement,
+  models,
 }: ThreeSceneProps) {
   const [selected, setSelected] = useState<Object3D | null>(null)
   const orbitRef = useRef<OrbitControlsImpl | null>(null)
@@ -291,6 +355,19 @@ export default function ThreeScene({
         onUpdateTempLineEnd={onUpdateTempLineEnd}
         registerObject={registerObject}
       />
+      {models.map((obj, idx) => (
+        <UploadedModel
+          key={idx}
+          object={obj}
+          objectId={`model-${idx}`}
+          onSelect={setSelected}
+          mode={mode}
+          onAddPoint={onAddPoint}
+          onAddLinePoint={onAddLinePoint}
+          onUpdateTempLineEnd={onUpdateTempLineEnd}
+          registerObject={registerObject}
+        />
+      ))}
       {planes.map((id) => (
         <Plane
           key={id}

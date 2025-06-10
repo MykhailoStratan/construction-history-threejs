@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import type { Object3D } from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import ThreeScene from './ThreeScene'
 import ToolPanel from './ToolPanel'
 import './App.css'
@@ -29,6 +32,7 @@ export default function App() {
     'select',
   )
   const [message, setMessage] = useState<string | null>(null)
+  const [models, setModels] = useState<Object3D[]>([])
 
   const addPlane = () => {
     setPlanes((prev) => [...prev, prev.length])
@@ -45,6 +49,32 @@ export default function App() {
     setTempLineEnd(null)
     setMode('placeLine')
     setMessage('Click to set start of line')
+  }
+
+  const loadModel = async (file: File) => {
+    const ext = file.name.split('.').pop()?.toLowerCase()
+    const url = URL.createObjectURL(file)
+    let obj: Object3D | null = null
+    try {
+      if (ext === 'fbx') {
+        const loader = new FBXLoader()
+        obj = await loader.loadAsync(url)
+      } else if (ext === 'gltf' || ext === 'glb') {
+        const loader = new GLTFLoader()
+        const gltf = await loader.loadAsync(url)
+        obj = gltf.scene
+      }
+    } finally {
+      URL.revokeObjectURL(url)
+    }
+    if (obj) {
+      setModels((prev) => [...prev, obj])
+      setMessage('Model added')
+    }
+  }
+
+  const handleModelUpload = (file: File) => {
+    void loadModel(file)
   }
 
   const handlePointAdd = (point: PointData) => {
@@ -86,6 +116,7 @@ export default function App() {
         onAddPlane={addPlane}
         onPlacePoint={enablePointPlacement}
         onDrawLine={enableLineDrawing}
+        onUploadModel={handleModelUpload}
       />
       <ThreeScene
         planes={planes}
@@ -97,6 +128,7 @@ export default function App() {
         onAddLinePoint={handleLinePoint}
         onUpdateTempLineEnd={setTempLineEnd}
         onCancelPointPlacement={cancelPointPlacement}
+        models={models}
       />
       {message && <div className="message">{message}</div>}
     </div>
