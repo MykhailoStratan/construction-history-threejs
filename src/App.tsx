@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Object3D } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import ThreeScene from './ThreeScene'
 import ToolPanel from './ToolPanel'
@@ -53,22 +52,20 @@ export default function App() {
   }
 
   const loadModel = async (file: File) => {
-    const arrayBuffer = await file.arrayBuffer()
     const ext = file.name.split('.').pop()?.toLowerCase()
+    const url = URL.createObjectURL(file)
     let obj: Object3D | null = null
-    if (ext === 'fbx') {
-      const loader = new FBXLoader()
-      obj = loader.parse(arrayBuffer, '')
-    } else if (ext === 'gltf' || ext === 'glb') {
-      const loader = new GLTFLoader()
-      obj = await new Promise<Object3D>((resolve, reject) => {
-        loader.parse(
-          arrayBuffer,
-          '',
-          (gltf: GLTF) => resolve(gltf.scene),
-          (err: unknown) => reject(err as Error),
-        )
-      })
+    try {
+      if (ext === 'fbx') {
+        const loader = new FBXLoader()
+        obj = await loader.loadAsync(url)
+      } else if (ext === 'gltf' || ext === 'glb') {
+        const loader = new GLTFLoader()
+        const gltf = await loader.loadAsync(url)
+        obj = gltf.scene
+      }
+    } finally {
+      URL.revokeObjectURL(url)
     }
     if (obj) {
       setModels((prev) => [...prev, obj])
