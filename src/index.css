@@ -1,5 +1,6 @@
 :root {
-  --header-height: 48px;
+  --header-base-height: 48px;
+  --header-height: calc(var(--header-base-height) + 4em);
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
