@@ -1,5 +1,5 @@
 .tool-panel-container {
-  position: absolute;
+  position: fixed;
   left: -80px;
   top: 0;
   height: 100vh;
