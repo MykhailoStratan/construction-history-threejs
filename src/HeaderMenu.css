@@ -51,6 +51,10 @@
     margin: 0 auto;
   }
 
+  .header-menu {
+    padding: 0;
+  }
+
   .menu-items {
     display: none;
     position: absolute;
