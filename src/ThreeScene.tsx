@@ -5,7 +5,7 @@ import type { JSX } from 'react'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { DoubleSide, Object3D, Vector3, Quaternion } from 'three'
 import type { BufferGeometry, BufferAttribute } from 'three'
-import type { LineData, LineEnd, PointData } from './types'
+import type { LineData, LineEnd, PointData, UploadData } from './types'
 import { useObjectInteractions } from './useObjectInteractions'
 
 
@@ -164,10 +164,52 @@ function LineObject({ line, objectMap }: { line: LineData; objectMap: React.Muta
   )
 }
 
+function UploadedObject({
+  objectId,
+  object,
+  onSelect,
+  selectedObject,
+  mode,
+  onAddPoint,
+  onAddLinePoint,
+  onUpdateTempLineEnd,
+  registerObject,
+}: {
+  objectId: string
+  object: Object3D
+  onSelect: (obj: Object3D) => void
+  selectedObject: Object3D | null
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
+  onAddPoint: (point: PointData) => void
+  onAddLinePoint: (point: LineEnd) => void
+  onUpdateTempLineEnd: (point: LineEnd) => void
+  registerObject: (id: string, obj: Object3D | null) => void
+}) {
+  const { ref, handlePointerDown, handlePointerMove } = useObjectInteractions({
+    objectId,
+    onSelect,
+    selectedObject,
+    mode,
+    onAddPoint,
+    onAddLinePoint,
+    onUpdateTempLineEnd,
+    registerObject,
+  })
+  return (
+    <primitive
+      ref={ref}
+      object={object}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+    />
+  )
+}
+
 interface ThreeSceneProps {
   planes: number[]
   points: PointData[]
   lines: LineData[]
+  uploads: UploadData[]
   tempLine: { start: LineEnd | null; end: LineEnd | null }
   mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
@@ -182,6 +224,7 @@ export default function ThreeScene({
   planes,
   points,
   lines,
+  uploads,
   tempLine,
   mode,
   onAddPoint,
@@ -243,6 +286,20 @@ export default function ThreeScene({
         onUpdateTempLineEnd={onUpdateTempLineEnd}
         registerObject={registerObject}
       />
+      {uploads.map((u) => (
+        <UploadedObject
+          key={u.id}
+          objectId={`upload-${u.id}`}
+          object={u.object}
+          onSelect={setSelected}
+          selectedObject={selected}
+          mode={mode}
+          onAddPoint={onAddPoint}
+          onAddLinePoint={onAddLinePoint}
+          onUpdateTempLineEnd={onUpdateTempLineEnd}
+          registerObject={registerObject}
+        />
+      ))}
       {planes.map((id) => (
         <Plane
           key={id}

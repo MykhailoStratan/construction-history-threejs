@@ -42,3 +42,8 @@
 .tool-panel button.active {
   border-color: #646cff;
 }
+
+.tool-panel .upload-button {
+  margin-top: auto;
+  margin-bottom: 1rem;
+}
