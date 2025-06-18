@@ -13,3 +13,8 @@ export interface LineData {
   start: LineEnd
   end: LineEnd
 }
+
+export interface ModelData {
+  id: string
+  object: import('three').Object3D
+}

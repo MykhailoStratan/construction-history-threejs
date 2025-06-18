@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import './ToolPanel.css'
 
 interface ToolPanelProps {
@@ -9,6 +9,7 @@ interface ToolPanelProps {
   onToggleLine: () => void
   moveEnabled: boolean
   onToggleMove: () => void
+  onUpload: (files: FileList) => void
 }
 
 export default function ToolPanel({
@@ -19,8 +20,10 @@ export default function ToolPanel({
   onToggleLine,
   moveEnabled,
   onToggleMove,
+  onUpload,
 }: ToolPanelProps) {
   const [open, setOpen] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   return (
     <div className={`tool-panel-container${open ? ' open' : ''}`}> 
@@ -44,6 +47,25 @@ export default function ToolPanel({
         >
           Line
         </button>
+        <button
+          style={{ marginTop: 'auto', marginBottom: '1rem' }}
+          onClick={() => fileRef.current?.click()}
+        >
+          Upload
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".fbx,.gltf,.glb"
+          multiple
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            if (e.target.files) {
+              onUpload(e.target.files)
+              e.target.value = ''
+            }
+          }}
+        />
       </div>
       <div
         className="panel-toggle"
