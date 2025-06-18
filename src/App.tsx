@@ -4,6 +4,7 @@ import ToolPanel from './ToolPanel'
 import HeaderMenu from './HeaderMenu'
 import type { LineData, LineEnd, PointData, ModelData } from './types'
 import { loadModel } from './loadModel'
+import { v4 as uuidv4 } from 'uuid'
 import './App.css'
 
 export default function App() {
@@ -39,7 +40,7 @@ export default function App() {
         const object = await loadModel(file)
         setModels((prev) => [
           ...prev,
-          { id: `model-${prev.length}`, object },
+          { id: uuidv4(), object },
         ])
         setMessage('Model uploaded')
       } catch (e) {

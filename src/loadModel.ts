@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { FBXLoader, GLTFLoader } from 'three-stdlib'
 import type { Object3D } from 'three'
+import type { GLTF } from 'three-stdlib'
 
 export async function loadModel(file: File): Promise<Object3D> {
   const url = URL.createObjectURL(file)
@@ -11,12 +10,12 @@ export async function loadModel(file: File): Promise<Object3D> {
     if (ext === 'fbx') {
       new FBXLoader().load(
         url,
-        (obj) => {
+        (obj: Object3D) => {
           cleanup()
           resolve(obj)
         },
         undefined,
-        (err) => {
+        (err: unknown) => {
           cleanup()
           reject(err instanceof Error ? err : new Error(String(err)))
         },
@@ -24,12 +23,12 @@ export async function loadModel(file: File): Promise<Object3D> {
     } else if (ext === 'gltf' || ext === 'glb') {
       new GLTFLoader().load(
         url,
-        (gltf) => {
+        (gltf: GLTF) => {
           cleanup()
           resolve(gltf.scene)
         },
         undefined,
-        (err) => {
+        (err: unknown) => {
           cleanup()
           reject(err instanceof Error ? err : new Error(String(err)))
         },
