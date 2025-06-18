@@ -5,7 +5,7 @@ import type { JSX } from 'react'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { DoubleSide, Object3D, Vector3, Quaternion } from 'three'
 import type { BufferGeometry, BufferAttribute } from 'three'
-import type { LineData, LineEnd, PointData } from './types'
+import type { LineData, LineEnd, PointData, ModelData } from './types'
 import { useObjectInteractions } from './useObjectInteractions'
 
 
@@ -164,10 +164,50 @@ function LineObject({ line, objectMap }: { line: LineData; objectMap: React.Muta
   )
 }
 
+function ImportedModel({
+  model,
+  objectId,
+  onSelect,
+  selectedObject,
+  mode,
+  onAddPoint,
+  onAddLinePoint,
+  onUpdateTempLineEnd,
+  registerObject,
+}: {
+  model: Object3D
+  objectId: string
+  onSelect: (obj: Object3D) => void
+  selectedObject: Object3D | null
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
+  onAddPoint: (point: PointData) => void
+  onAddLinePoint: (point: LineEnd) => void
+  onUpdateTempLineEnd: (point: LineEnd) => void
+  registerObject: (id: string, obj: Object3D | null) => void
+}) {
+  const { ref, handlePointerDown, handlePointerMove } = useObjectInteractions({
+    objectId,
+    onSelect,
+    selectedObject,
+    mode,
+    onAddPoint,
+    onAddLinePoint,
+    onUpdateTempLineEnd,
+    registerObject,
+  })
+
+  return (
+    <group ref={ref} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove}>
+      <primitive object={model} />
+    </group>
+  )
+}
+
 interface ThreeSceneProps {
   planes: number[]
   points: PointData[]
   lines: LineData[]
+  models: ModelData[]
   tempLine: { start: LineEnd | null; end: LineEnd | null }
   mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
@@ -182,6 +222,7 @@ export default function ThreeScene({
   planes,
   points,
   lines,
+  models,
   tempLine,
   mode,
   onAddPoint,
@@ -248,6 +289,20 @@ export default function ThreeScene({
           key={id}
           objectId={`plane-${id}`}
           position={[0, 0, 0]}
+          onSelect={setSelected}
+          selectedObject={selected}
+          mode={mode}
+          onAddPoint={onAddPoint}
+          onAddLinePoint={onAddLinePoint}
+          onUpdateTempLineEnd={onUpdateTempLineEnd}
+          registerObject={registerObject}
+        />
+      ))}
+      {models.map((m) => (
+        <ImportedModel
+          key={m.id}
+          objectId={m.id}
+          model={m.object}
           onSelect={setSelected}
           selectedObject={selected}
           mode={mode}

@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react'
 import ThreeScene from './ThreeScene'
 import ToolPanel from './ToolPanel'
 import HeaderMenu from './HeaderMenu'
-import type { LineData, LineEnd, PointData } from './types'
+import type { LineData, LineEnd, PointData, ModelData } from './types'
+import { loadModel } from './loadModel'
 import './App.css'
 
 export default function App() {
   const [planes, setPlanes] = useState<number[]>([])
+
+  const [models, setModels] = useState<ModelData[]>([])
 
   const [points, setPoints] = useState<PointData[]>([])
   const [lines, setLines] = useState<LineData[]>([])
@@ -28,6 +31,22 @@ export default function App() {
 
   const cancelMove = () => {
     setMode('idle')
+  }
+
+  const handleUploadModels = async (files: FileList) => {
+    for (const file of Array.from(files)) {
+      try {
+        const object = await loadModel(file)
+        setModels((prev) => [
+          ...prev,
+          { id: `model-${prev.length}`, object },
+        ])
+        setMessage('Model uploaded')
+      } catch (e) {
+        console.error(e)
+        setMessage('Failed to load model')
+      }
+    }
   }
 
   const togglePointPlacement = () => {
@@ -102,6 +121,7 @@ export default function App() {
         planes={planes}
         points={points}
         lines={lines}
+        models={models}
         tempLine={{ start: lineStart, end: tempLineEnd }}
         mode={mode}
         onAddPoint={handlePointAdd}
@@ -120,6 +140,9 @@ export default function App() {
         onToggleLine={toggleLineDrawing}
         moveEnabled={mode === 'move'}
         onToggleMove={toggleMove}
+        onUpload={(files) => {
+          void handleUploadModels(files)
+        }}
       />
       <section id="home" className="menu-section">
         <h2>Home</h2>
