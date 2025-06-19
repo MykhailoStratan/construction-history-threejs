@@ -8,6 +8,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
 import { MeshStandardMaterial, Mesh, Object3D } from 'three'
+import { gltfKhrPbrSpecularGlossinessConverter } from './gltfKhrPbrSpecularGlossinessConverter'
 import './App.css'
 
 const dracoLoader = new DRACOLoader()
@@ -60,6 +61,7 @@ export default function App() {
       } else if (ext === 'gltf' || ext === 'glb') {
         const loader = new GLTFLoader()
         loader.setDRACOLoader(dracoLoader)
+        loader.register(gltfKhrPbrSpecularGlossinessConverter())
         loader.load(
           url,
           (gltf) => {
