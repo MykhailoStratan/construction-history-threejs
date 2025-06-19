@@ -34,6 +34,8 @@ function Box({
     isSelected,
     handlePointerDown,
     handlePointerMove,
+    handlePointerOver,
+    handlePointerOut,
   } = useObjectInteractions({
     objectId,
     onSelect,
@@ -50,6 +52,8 @@ function Box({
       {...props}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
+      onPointerOver={handlePointerOver}
+      onPointerOut={handlePointerOut}
     >
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial
@@ -86,6 +90,8 @@ function Plane({
     isSelected,
     handlePointerDown,
     handlePointerMove,
+    handlePointerOver,
+    handlePointerOut,
   } = useObjectInteractions({
     objectId,
     onSelect,
@@ -103,6 +109,8 @@ function Plane({
       {...props}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
+      onPointerOver={handlePointerOver}
+      onPointerOut={handlePointerOut}
     >
       <planeGeometry args={[10, 10]} />
       <meshStandardMaterial
@@ -187,7 +195,13 @@ function UploadedObject({
   registerObject: (id: string, obj: Object3D | null) => void
   highlight: boolean
 }) {
-  const { ref, handlePointerDown, handlePointerMove } = useObjectInteractions({
+  const {
+    ref,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerOver,
+    handlePointerOut,
+  } = useObjectInteractions({
     objectId,
     onSelect,
     selectedObject,
@@ -224,6 +238,8 @@ function UploadedObject({
         object={object}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
+        onPointerOver={handlePointerOver}
+        onPointerOut={handlePointerOut}
       />
     </group>
   )

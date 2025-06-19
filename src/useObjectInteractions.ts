@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { Object3D } from 'three'
+import { Mesh, MeshStandardMaterial } from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
 import type { LineEnd, PointData } from './types'
 
@@ -30,6 +31,28 @@ export function useObjectInteractions({
   }, [objectId, registerObject])
 
   const isSelected = selectedObject != null && selectedObject === ref.current
+
+  const applyHighlight = (obj: Object3D, highlight: boolean) => {
+    obj.traverse((child) => {
+      if ((child as Mesh).isMesh) {
+        const mesh = child as Mesh
+        const materials: MeshStandardMaterial[] = Array.isArray(mesh.material)
+          ? (mesh.material as MeshStandardMaterial[])
+          : [mesh.material as MeshStandardMaterial]
+        materials.forEach((mat) => {
+          if (highlight) {
+            if (mat.userData.__origColor === undefined) {
+              mat.userData.__origColor = mat.color.getHex()
+            }
+            mat.color.set('#ffff00')
+          } else if (mat.userData.__origColor !== undefined) {
+            mat.color.set(mat.userData.__origColor as number)
+            delete mat.userData.__origColor
+          }
+        })
+      }
+    })
+  }
 
   const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
@@ -65,5 +88,22 @@ export function useObjectInteractions({
     }
   }
 
-  return { ref, isSelected, handlePointerDown, handlePointerMove }
+  const handlePointerOver = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation()
+    applyHighlight(e.eventObject, true)
+  }
+
+  const handlePointerOut = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation()
+    applyHighlight(e.eventObject, false)
+  }
+
+  return {
+    ref,
+    isSelected,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerOver,
+    handlePointerOut,
+  }
 }
