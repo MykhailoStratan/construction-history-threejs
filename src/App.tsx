@@ -7,11 +7,14 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
-import { MeshStandardMaterial, Mesh, Object3D } from 'three'
+import { MeshStandardMaterial, Mesh, Object3D, DataTexture, RGBAFormat } from 'three'
 import { gltfKhrPbrSpecularGlossinessConverter } from './gltfKhrPbrSpecularGlossinessConverter'
 import './App.css'
 
 const dracoLoader = new DRACOLoader()
+const whitePixel = new Uint8Array([255, 255, 255, 255])
+const defaultTexture = new DataTexture(whitePixel, 1, 1, RGBAFormat)
+defaultTexture.needsUpdate = true
 
 export default function App() {
   const [planes, setPlanes] = useState<number[]>([])
@@ -19,6 +22,7 @@ export default function App() {
   const [points, setPoints] = useState<PointData[]>([])
   const [lines, setLines] = useState<LineData[]>([])
   const [uploads, setUploads] = useState<UploadData[]>([])
+  const [focusUploadId, setFocusUploadId] = useState<number | null>(null)
   const uploadCounter = useRef(0)
   const [lineStart, setLineStart] = useState<LineEnd | null>(null)
   const [tempLineEnd, setTempLineEnd] = useState<LineEnd | null>(null)
@@ -50,6 +54,11 @@ export default function App() {
           url,
           (obj) => {
             revoke()
+            obj.traverse((c) => {
+              if (c instanceof Mesh) {
+                c.material = new MeshStandardMaterial({ map: defaultTexture })
+              }
+            })
             resolve(obj)
           },
           undefined,
@@ -66,6 +75,11 @@ export default function App() {
           url,
           (gltf) => {
             revoke()
+            gltf.scene.traverse((c) => {
+              if (c instanceof Mesh) {
+                c.material = new MeshStandardMaterial({ map: defaultTexture })
+              }
+            })
             resolve(gltf.scene)
           },
           undefined,
@@ -79,7 +93,8 @@ export default function App() {
           url,
           (geom) => {
             revoke()
-            resolve(new Mesh(geom, new MeshStandardMaterial({ color: 'white' })))
+            const mesh = new Mesh(geom, new MeshStandardMaterial({ map: defaultTexture }))
+            resolve(mesh)
           },
           undefined,
           (err) => {
@@ -102,6 +117,7 @@ export default function App() {
           const object = await loadModel(file)
           const id = uploadCounter.current++
           setUploads((prev) => [...prev, { id, object }])
+          setFocusUploadId(id)
           setMessage(`${file.name} loaded`)
         } catch (e) {
           console.error(e)
@@ -184,6 +200,7 @@ export default function App() {
         points={points}
         lines={lines}
         uploads={uploads}
+        focusUploadId={focusUploadId}
         tempLine={{ start: lineStart, end: tempLineEnd }}
         mode={mode}
         onAddPoint={handlePointAdd}

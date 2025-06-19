@@ -3,7 +3,7 @@ import { OrbitControls, TransformControls } from '@react-three/drei'
 import { useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import { DoubleSide, Object3D, Vector3, Quaternion } from 'three'
+import { DoubleSide, Object3D, Vector3, Quaternion, Box3, SpotLight } from 'three'
 import type { BufferGeometry, BufferAttribute } from 'three'
 import type { LineData, LineEnd, PointData, UploadData } from './types'
 import { useObjectInteractions } from './useObjectInteractions'
@@ -174,6 +174,7 @@ function UploadedObject({
   onAddLinePoint,
   onUpdateTempLineEnd,
   registerObject,
+  highlight,
 }: {
   objectId: string
   object: Object3D
@@ -184,6 +185,7 @@ function UploadedObject({
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
   registerObject: (id: string, obj: Object3D | null) => void
+  highlight: boolean
 }) {
   const { ref, handlePointerDown, handlePointerMove } = useObjectInteractions({
     objectId,
@@ -195,13 +197,35 @@ function UploadedObject({
     onUpdateTempLineEnd,
     registerObject,
   })
+  const spotRef = useRef<SpotLight>(null!)
+  const [center, setCenter] = useState<[number, number, number]>([0, 0, 0])
+  useEffect(() => {
+    const box = new Box3().setFromObject(object)
+    const c = box.getCenter(new Vector3())
+    setCenter([c.x, c.y, c.z])
+  }, [object])
+  useEffect(() => {
+    if (highlight && spotRef.current) {
+      spotRef.current.target.position.set(center[0], center[1], center[2])
+      spotRef.current.target.updateMatrixWorld()
+    }
+  }, [highlight, center])
   return (
-    <primitive
-      ref={ref}
-      object={object}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-    />
+    <group>
+      {highlight && (
+        <spotLight
+          ref={spotRef}
+          position={[center[0], center[1] + 5, center[2] + 5]}
+          intensity={1.5}
+        />
+      )}
+      <primitive
+        ref={ref}
+        object={object}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+      />
+    </group>
   )
 }
 
@@ -210,6 +234,7 @@ interface ThreeSceneProps {
   points: PointData[]
   lines: LineData[]
   uploads: UploadData[]
+  focusUploadId: number | null
   tempLine: { start: LineEnd | null; end: LineEnd | null }
   mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
   onAddPoint: (point: PointData) => void
@@ -225,6 +250,7 @@ export default function ThreeScene({
   points,
   lines,
   uploads,
+  focusUploadId,
   tempLine,
   mode,
   onAddPoint,
@@ -261,6 +287,20 @@ export default function ThreeScene({
     return () => window.removeEventListener('keydown', handleKey)
   }, [mode, onCancelPointPlacement, onCancelMove])
 
+  useEffect(() => {
+    if (focusUploadId == null || !orbitRef.current) return
+    const obj = objectMap.current[`upload-${focusUploadId}`]
+    if (!obj) return
+    const box = new Box3().setFromObject(obj)
+    const center = box.getCenter(new Vector3())
+    const size = box.getSize(new Vector3()).length()
+    orbitRef.current.target.copy(center)
+    const camera = orbitRef.current.object
+    const dir = new Vector3().subVectors(camera.position, orbitRef.current.target).normalize()
+    camera.position.copy(center.clone().add(dir.multiplyScalar(size * 1.5)))
+    orbitRef.current.update()
+  }, [focusUploadId, uploads])
+
   return (
     <Canvas
       style={{ position: 'fixed', top: 0, left: 0, height: '100vh', width: '100vw', zIndex: 0 }}
@@ -291,6 +331,7 @@ export default function ThreeScene({
           key={u.id}
           objectId={`upload-${u.id}`}
           object={u.object}
+          highlight={focusUploadId === u.id}
           onSelect={setSelected}
           selectedObject={selected}
           mode={mode}
