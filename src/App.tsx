@@ -29,6 +29,7 @@ export default function App() {
   const [mode, setMode] =
     useState<'idle' | 'move' | 'placePoint' | 'placeLine'>('idle')
   const [message, setMessage] = useState<string | null>(null)
+  const [uiVisible, setUiVisible] = useState(true)
 
   const addPlane = () => {
     setPlanes((prev) => [...prev, prev.length])
@@ -38,6 +39,10 @@ export default function App() {
   const toggleMove = () => {
     setMode((prev) => (prev === 'move' ? 'idle' : 'move'))
     setMessage(null)
+  }
+
+  const toggleUI = () => {
+    setUiVisible((prev) => !prev)
   }
 
   const cancelMove = () => {
@@ -210,7 +215,7 @@ export default function App() {
         onCancelLineChain={cancelLineChain}
         onCancelMove={cancelMove}
       />
-      <HeaderMenu />
+      {uiVisible && <HeaderMenu />}
       <ToolPanel
         onAddPlane={addPlane}
         pointEnabled={mode === 'placePoint'}
@@ -219,23 +224,28 @@ export default function App() {
         onToggleLine={toggleLineDrawing}
         moveEnabled={mode === 'move'}
         onToggleMove={toggleMove}
+        onToggleUI={toggleUI}
         onUpload={handleUpload}
       />
-      <section id="home" className="menu-section">
-        <h2>Home</h2>
-      </section>
-      <section id="services" className="menu-section">
-        <h2>Services</h2>
-      </section>
-      <section id="prices" className="menu-section">
-        <h2>Prices</h2>
-      </section>
-      <section id="contacts" className="menu-section">
-        <h2>Contacts</h2>
-      </section>
-      <section id="about" className="menu-section">
-        <h2>About</h2>
-      </section>
+      {uiVisible && (
+        <>
+          <section id="home" className="menu-section">
+            <h2>Home</h2>
+          </section>
+          <section id="services" className="menu-section">
+            <h2>Services</h2>
+          </section>
+          <section id="prices" className="menu-section">
+            <h2>Prices</h2>
+          </section>
+          <section id="contacts" className="menu-section">
+            <h2>Contacts</h2>
+          </section>
+          <section id="about" className="menu-section">
+            <h2>About</h2>
+          </section>
+        </>
+      )}
       {message && <div className="message">{message}</div>}
     </div>
   )
