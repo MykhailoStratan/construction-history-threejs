@@ -23,7 +23,7 @@ function Box({
   objectId: string
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine' | 'edit'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -75,7 +75,7 @@ function Plane({
   objectId: string
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine' | 'edit'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -180,7 +180,7 @@ function UploadedObject({
   object: Object3D
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine' | 'edit'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -236,7 +236,7 @@ interface ThreeSceneProps {
   uploads: UploadData[]
   focusUploadId: number | null
   tempLine: { start: LineEnd | null; end: LineEnd | null }
-  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine' | 'edit'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -278,7 +278,7 @@ export default function ThreeScene({
         setSelected(null)
         if (mode === 'placePoint' || mode === 'placeLine') {
           onCancelPointPlacement()
-        } else if (mode === 'move') {
+        } else if (mode === 'move' || mode === 'edit') {
           onCancelMove()
         }
       }
@@ -366,7 +366,7 @@ export default function ThreeScene({
         if (!objectMap.current[tempLine.start.objectId] || !objectMap.current[tempLine.end.objectId]) return null
         return <LineObject line={{ start: tempLine.start, end: tempLine.end }} objectMap={objectMap} />
       })()}
-      {selected && mode === 'move' && (
+      {selected && (mode === 'move' || mode === 'edit') && (
         <TransformControls
           object={selected}
           mode="translate"

@@ -16,7 +16,7 @@ export function useObjectInteractions({
   objectId: string
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine' | 'edit'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -51,6 +51,8 @@ export function useObjectInteractions({
       onAddLinePoint({ objectId, position: local })
     } else if (mode === 'move') {
       onSelect(ref.current)
+    } else if (mode === 'edit') {
+      onSelect(e.eventObject)
     }
   }
 

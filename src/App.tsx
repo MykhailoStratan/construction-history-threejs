@@ -27,7 +27,7 @@ export default function App() {
   const [lineStart, setLineStart] = useState<LineEnd | null>(null)
   const [tempLineEnd, setTempLineEnd] = useState<LineEnd | null>(null)
   const [mode, setMode] =
-    useState<'idle' | 'move' | 'placePoint' | 'placeLine'>('idle')
+    useState<'idle' | 'move' | 'placePoint' | 'placeLine' | 'edit'>('idle')
   const [message, setMessage] = useState<string | null>(null)
   const [uiVisible, setUiVisible] = useState(true)
 
@@ -38,6 +38,11 @@ export default function App() {
 
   const toggleMove = () => {
     setMode((prev) => (prev === 'move' ? 'idle' : 'move'))
+    setMessage(null)
+  }
+
+  const toggleEdit = () => {
+    setMode((prev) => (prev === 'edit' ? 'idle' : 'edit'))
     setMessage(null)
   }
 
@@ -224,6 +229,8 @@ export default function App() {
         onToggleLine={toggleLineDrawing}
         moveEnabled={mode === 'move'}
         onToggleMove={toggleMove}
+        editEnabled={mode === 'edit'}
+        onToggleEdit={toggleEdit}
         onToggleUI={toggleUI}
         onUpload={handleUpload}
       />
