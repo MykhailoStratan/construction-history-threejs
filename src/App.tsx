@@ -1,15 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ThreeScene from './ThreeScene'
 import ToolPanel from './ToolPanel'
 import HeaderMenu from './HeaderMenu'
-import type { LineData, LineEnd, PointData } from './types'
+import type { LineData, LineEnd, PointData, UploadData } from './types'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
+import { MeshStandardMaterial, Mesh, Object3D } from 'three'
+import { gltfKhrPbrSpecularGlossinessConverter } from './gltfKhrPbrSpecularGlossinessConverter'
 import './App.css'
+
+const dracoLoader = new DRACOLoader()
 
 export default function App() {
   const [planes, setPlanes] = useState<number[]>([])
 
   const [points, setPoints] = useState<PointData[]>([])
   const [lines, setLines] = useState<LineData[]>([])
+  const [uploads, setUploads] = useState<UploadData[]>([])
+  const uploadCounter = useRef(0)
   const [lineStart, setLineStart] = useState<LineEnd | null>(null)
   const [tempLineEnd, setTempLineEnd] = useState<LineEnd | null>(null)
   const [mode, setMode] =
@@ -28,6 +38,77 @@ export default function App() {
 
   const cancelMove = () => {
     setMode('idle')
+  }
+
+  const loadModel = (file: File): Promise<Object3D> => {
+    const ext = file.name.split('.').pop()?.toLowerCase()
+    const url = URL.createObjectURL(file)
+    return new Promise((resolve, reject) => {
+      const revoke = () => URL.revokeObjectURL(url)
+      if (ext === 'fbx') {
+        new FBXLoader().load(
+          url,
+          (obj) => {
+            revoke()
+            resolve(obj)
+          },
+          undefined,
+          (err) => {
+            revoke()
+            reject(err instanceof Error ? err : new Error('Failed to load model'))
+          },
+        )
+      } else if (ext === 'gltf' || ext === 'glb') {
+        const loader = new GLTFLoader()
+        loader.setDRACOLoader(dracoLoader)
+        loader.register(gltfKhrPbrSpecularGlossinessConverter())
+        loader.load(
+          url,
+          (gltf) => {
+            revoke()
+            resolve(gltf.scene)
+          },
+          undefined,
+          (err) => {
+            revoke()
+            reject(err instanceof Error ? err : new Error('Failed to load model'))
+          },
+        )
+      } else if (ext === 'stl') {
+        new STLLoader().load(
+          url,
+          (geom) => {
+            revoke()
+            resolve(new Mesh(geom, new MeshStandardMaterial({ color: 'white' })))
+          },
+          undefined,
+          (err) => {
+            revoke()
+            reject(err instanceof Error ? err : new Error('Failed to load model'))
+          },
+        )
+      } else {
+        revoke()
+        reject(new Error('Unsupported file type'))
+      }
+    })
+  }
+
+  const handleUpload = (files: FileList | null): void => {
+    if (!files) return
+    void (async () => {
+      for (const file of Array.from(files)) {
+        try {
+          const object = await loadModel(file)
+          const id = uploadCounter.current++
+          setUploads((prev) => [...prev, { id, object }])
+          setMessage(`${file.name} loaded`)
+        } catch (e) {
+          console.error(e)
+          setMessage(`Failed to load ${file.name}`)
+        }
+      }
+    })()
   }
 
   const togglePointPlacement = () => {
@@ -102,6 +183,7 @@ export default function App() {
         planes={planes}
         points={points}
         lines={lines}
+        uploads={uploads}
         tempLine={{ start: lineStart, end: tempLineEnd }}
         mode={mode}
         onAddPoint={handlePointAdd}
@@ -120,6 +202,7 @@ export default function App() {
         onToggleLine={toggleLineDrawing}
         moveEnabled={mode === 'move'}
         onToggleMove={toggleMove}
+        onUpload={handleUpload}
       />
       <section id="home" className="menu-section">
         <h2>Home</h2>
