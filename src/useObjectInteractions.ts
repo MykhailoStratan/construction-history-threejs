@@ -1,6 +1,12 @@
 import { useEffect, useRef } from 'react'
 import type { Object3D } from 'three'
-import { Mesh, MeshStandardMaterial, Raycaster } from 'three'
+import {
+  Mesh,
+  Raycaster,
+  EdgesGeometry,
+  LineBasicMaterial,
+  LineSegments,
+} from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
 import type { LineEnd, PointData } from './types'
 
@@ -38,20 +44,23 @@ export function useObjectInteractions({
     obj.traverse((child) => {
       if ((child as Mesh).isMesh) {
         const mesh = child as Mesh
-        const materials: MeshStandardMaterial[] = Array.isArray(mesh.material)
-          ? (mesh.material as MeshStandardMaterial[])
-          : [mesh.material as MeshStandardMaterial]
-        materials.forEach((mat) => {
-          if (highlight) {
-            if (mat.userData.__origColor === undefined) {
-              mat.userData.__origColor = mat.color.getHex()
-            }
-            mat.color.set('#ffff00')
-          } else if (mat.userData.__origColor !== undefined) {
-            mat.color.set(mat.userData.__origColor as number)
-            delete mat.userData.__origColor
+        if (highlight) {
+          if (!mesh.userData.__edgeHelper) {
+            const edges = new EdgesGeometry(mesh.geometry)
+            const line = new LineSegments(
+              edges,
+              new LineBasicMaterial({ color: '#ffff00' }),
+            )
+            mesh.add(line)
+            mesh.userData.__edgeHelper = line
           }
-        })
+        } else if (mesh.userData.__edgeHelper) {
+          const line = mesh.userData.__edgeHelper as LineSegments
+          mesh.remove(line)
+          line.geometry.dispose()
+          ;(line.material as LineBasicMaterial).dispose()
+          delete mesh.userData.__edgeHelper
+        }
       }
     })
   }
