@@ -59,9 +59,7 @@ export function useObjectInteractions({
     const local = ref.current
       .worldToLocal(e.point.clone())
       .toArray() as [number, number, number]
-    if ((e.eventObject as Mesh).isMesh) {
-      console.log((e.eventObject as Mesh).name)
-    }
+    console.log(e)
     if (mode === 'placePoint') {
       if (e.button !== 0) return
       const normal = e.face?.normal?.clone()
