@@ -6,12 +6,12 @@ import type { LineData, LineEnd, PointData, UploadData } from './types'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
+import { NodeIO } from '@gltf-transform/core'
+import { KHRDracoMeshCompression } from '@gltf-transform/extensions'
+import draco3d from 'draco3dgltf'
 import { MeshStandardMaterial, Mesh, Object3D, DataTexture, RGBAFormat } from 'three'
 import { gltfKhrPbrSpecularGlossinessConverter } from './gltfKhrPbrSpecularGlossinessConverter'
 import './App.css'
-
-const dracoLoader = new DRACOLoader()
 const whitePixel = new Uint8Array([255, 255, 255, 255])
 const defaultTexture = new DataTexture(whitePixel, 1, 1, RGBAFormat)
 defaultTexture.needsUpdate = true
@@ -68,26 +68,41 @@ export default function App() {
           },
         )
       } else if (ext === 'gltf' || ext === 'glb') {
-        const loader = new GLTFLoader()
-        loader.setDRACOLoader(dracoLoader)
-        loader.register(gltfKhrPbrSpecularGlossinessConverter())
-        loader.load(
-          url,
-          (gltf) => {
-            revoke()
-            gltf.scene.traverse((c) => {
-              if (c instanceof Mesh) {
-                c.material = new MeshStandardMaterial({ map: defaultTexture })
-              }
-            })
-            resolve(gltf.scene)
-          },
-          undefined,
-          (err) => {
+        void (async () => {
+          try {
+            const arrayBuffer = await file.arrayBuffer()
+            const io = new NodeIO()
+              .registerExtensions([KHRDracoMeshCompression])
+              .registerDependencies({
+                'draco3d.decoder': await draco3d.createDecoderModule(),
+              })
+            const document = await io.readBinary(new Uint8Array(arrayBuffer))
+            const glb = await io.writeBinary(document)
+
+            const loader = new GLTFLoader()
+            loader.register(gltfKhrPbrSpecularGlossinessConverter())
+            loader.parse(
+              glb.buffer.slice(glb.byteOffset, glb.byteOffset + glb.byteLength),
+              '',
+              (gltf) => {
+                revoke()
+                gltf.scene.traverse((c) => {
+                  if (c instanceof Mesh) {
+                    c.material = new MeshStandardMaterial({ map: defaultTexture })
+                  }
+                })
+                resolve(gltf.scene)
+              },
+              (err) => {
+                revoke()
+                reject(err instanceof Error ? err : new Error('Failed to load model'))
+              },
+            )
+          } catch (err) {
             revoke()
             reject(err instanceof Error ? err : new Error('Failed to load model'))
-          },
-        )
+          }
+        })()
       } else if (ext === 'stl') {
         new STLLoader().load(
           url,
