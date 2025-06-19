@@ -10,6 +10,7 @@ interface ToolPanelProps {
   onToggleLine: () => void
   moveEnabled: boolean
   onToggleMove: () => void
+  onToggleUI: () => void
   onUpload: (files: FileList | null) => void
 }
 
@@ -21,6 +22,7 @@ export default function ToolPanel({
   onToggleLine,
   moveEnabled,
   onToggleMove,
+  onToggleUI,
   onUpload,
 }: ToolPanelProps) {
   const [open, setOpen] = useState(false)
@@ -48,6 +50,7 @@ export default function ToolPanel({
         >
           Line
         </button>
+        <button onClick={onToggleUI}>Toggle UI</button>
         <input
           type="file"
           ref={fileInputRef}
