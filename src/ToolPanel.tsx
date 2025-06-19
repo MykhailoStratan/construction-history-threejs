@@ -10,6 +10,8 @@ interface ToolPanelProps {
   onToggleLine: () => void
   moveEnabled: boolean
   onToggleMove: () => void
+  editEnabled: boolean
+  onToggleEdit: () => void
   onToggleUI: () => void
   onUpload: (files: FileList | null) => void
 }
@@ -22,6 +24,8 @@ export default function ToolPanel({
   onToggleLine,
   moveEnabled,
   onToggleMove,
+  editEnabled,
+  onToggleEdit,
   onToggleUI,
   onUpload,
 }: ToolPanelProps) {
@@ -36,6 +40,12 @@ export default function ToolPanel({
           onClick={onToggleMove}
         >
           Move
+        </button>
+        <button
+          className={editEnabled ? 'active' : ''}
+          onClick={onToggleEdit}
+        >
+          Edit
         </button>
         <button onClick={onAddPlane}>Plane</button>
         <button

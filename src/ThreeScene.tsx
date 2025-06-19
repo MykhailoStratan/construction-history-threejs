@@ -23,7 +23,7 @@ function Box({
   objectId: string
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine' | 'edit'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -34,6 +34,7 @@ function Box({
     isSelected,
     handlePointerDown,
     handlePointerMove,
+    handlePointerOut,
   } = useObjectInteractions({
     objectId,
     onSelect,
@@ -50,6 +51,7 @@ function Box({
       {...props}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
+      onPointerOut={handlePointerOut}
     >
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial
@@ -75,7 +77,7 @@ function Plane({
   objectId: string
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine' | 'edit'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -86,6 +88,7 @@ function Plane({
     isSelected,
     handlePointerDown,
     handlePointerMove,
+    handlePointerOut,
   } = useObjectInteractions({
     objectId,
     onSelect,
@@ -103,6 +106,7 @@ function Plane({
       {...props}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
+      onPointerOut={handlePointerOut}
     >
       <planeGeometry args={[10, 10]} />
       <meshStandardMaterial
@@ -180,14 +184,19 @@ function UploadedObject({
   object: Object3D
   onSelect: (obj: Object3D) => void
   selectedObject: Object3D | null
-  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine' | 'edit'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
   registerObject: (id: string, obj: Object3D | null) => void
   highlight: boolean
 }) {
-  const { ref, handlePointerDown, handlePointerMove } = useObjectInteractions({
+  const {
+    ref,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerOut,
+  } = useObjectInteractions({
     objectId,
     onSelect,
     selectedObject,
@@ -224,6 +233,7 @@ function UploadedObject({
         object={object}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
+        onPointerOut={handlePointerOut}
       />
     </group>
   )
@@ -236,7 +246,7 @@ interface ThreeSceneProps {
   uploads: UploadData[]
   focusUploadId: number | null
   tempLine: { start: LineEnd | null; end: LineEnd | null }
-  mode: 'idle' | 'move' | 'placePoint' | 'placeLine'
+  mode: 'idle' | 'move' | 'placePoint' | 'placeLine' | 'edit'
   onAddPoint: (point: PointData) => void
   onAddLinePoint: (point: LineEnd) => void
   onUpdateTempLineEnd: (point: LineEnd) => void
@@ -278,7 +288,7 @@ export default function ThreeScene({
         setSelected(null)
         if (mode === 'placePoint' || mode === 'placeLine') {
           onCancelPointPlacement()
-        } else if (mode === 'move') {
+        } else if (mode === 'move' || mode === 'edit') {
           onCancelMove()
         }
       }
@@ -366,7 +376,7 @@ export default function ThreeScene({
         if (!objectMap.current[tempLine.start.objectId] || !objectMap.current[tempLine.end.objectId]) return null
         return <LineObject line={{ start: tempLine.start, end: tempLine.end }} objectMap={objectMap} />
       })()}
-      {selected && mode === 'move' && (
+      {selected && (mode === 'move' || mode === 'edit') && (
         <TransformControls
           object={selected}
           mode="translate"
