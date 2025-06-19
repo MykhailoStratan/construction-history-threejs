@@ -59,6 +59,9 @@ export function useObjectInteractions({
     const local = ref.current
       .worldToLocal(e.point.clone())
       .toArray() as [number, number, number]
+    if ((e.eventObject as Mesh).isMesh) {
+      console.log((e.eventObject as Mesh).name)
+    }
     if (mode === 'placePoint') {
       if (e.button !== 0) return
       const normal = e.face?.normal?.clone()
@@ -90,12 +93,16 @@ export function useObjectInteractions({
 
   const handlePointerOver = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
-    applyHighlight(e.eventObject, true)
+    if (mode === 'move' || mode === 'edit') {
+      applyHighlight(e.eventObject, true)
+    }
   }
 
   const handlePointerOut = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
-    applyHighlight(e.eventObject, false)
+    if (mode === 'move' || mode === 'edit') {
+      applyHighlight(e.eventObject, false)
+    }
   }
 
   return {
