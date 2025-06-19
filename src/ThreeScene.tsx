@@ -34,7 +34,6 @@ function Box({
     isSelected,
     handlePointerDown,
     handlePointerMove,
-    handlePointerOver,
     handlePointerOut,
   } = useObjectInteractions({
     objectId,
@@ -52,7 +51,6 @@ function Box({
       {...props}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}
     >
       <boxGeometry args={[1, 1, 1]} />
@@ -90,7 +88,6 @@ function Plane({
     isSelected,
     handlePointerDown,
     handlePointerMove,
-    handlePointerOver,
     handlePointerOut,
   } = useObjectInteractions({
     objectId,
@@ -109,7 +106,6 @@ function Plane({
       {...props}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}
     >
       <planeGeometry args={[10, 10]} />
@@ -199,7 +195,6 @@ function UploadedObject({
     ref,
     handlePointerDown,
     handlePointerMove,
-    handlePointerOver,
     handlePointerOut,
   } = useObjectInteractions({
     objectId,
@@ -238,7 +233,6 @@ function UploadedObject({
         object={object}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
-        onPointerOver={handlePointerOver}
         onPointerOut={handlePointerOut}
       />
     </group>

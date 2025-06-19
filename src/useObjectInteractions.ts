@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { Object3D } from 'three'
-import { Mesh, MeshStandardMaterial } from 'three'
+import { Mesh, MeshStandardMaterial, Raycaster } from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
 import type { LineEnd, PointData } from './types'
 
@@ -24,6 +24,8 @@ export function useObjectInteractions({
   registerObject: (id: string, obj: Object3D | null) => void
 }) {
   const ref = useRef<Object3D>(null!)
+  const hovered = useRef<Object3D | null>(null)
+  const raycaster = useRef<Raycaster>(new Raycaster())
 
   useEffect(() => {
     registerObject(objectId, ref.current)
@@ -59,7 +61,10 @@ export function useObjectInteractions({
     const local = ref.current
       .worldToLocal(e.point.clone())
       .toArray() as [number, number, number]
-    console.log(e)
+    raycaster.current.ray.origin.copy(e.ray.origin)
+    raycaster.current.ray.direction.copy(e.ray.direction)
+    const hit = raycaster.current.intersectObject(ref.current, true)[0]
+    if (hit) console.log(hit.object.name)
     if (mode === 'placePoint') {
       if (e.button !== 0) return
       const normal = e.face?.normal?.clone()
@@ -76,7 +81,7 @@ export function useObjectInteractions({
     } else if (mode === 'move') {
       onSelect(ref.current)
     } else if (mode === 'edit') {
-      onSelect(e.eventObject)
+      onSelect(hit ? hit.object : ref.current)
     }
   }
 
@@ -86,20 +91,23 @@ export function useObjectInteractions({
         .worldToLocal(e.point.clone())
         .toArray() as [number, number, number]
       onUpdateTempLineEnd({ objectId, position: localMove })
+      return
+    }
+    if (mode !== 'move' && mode !== 'edit') return
+    raycaster.current.ray.origin.copy(e.ray.origin)
+    raycaster.current.ray.direction.copy(e.ray.direction)
+    const hit = raycaster.current.intersectObject(ref.current, true)[0]?.object ?? null
+    if (hovered.current !== hit) {
+      if (hovered.current) applyHighlight(hovered.current, false)
+      hovered.current = hit
+      if (hit) applyHighlight(hit, true)
     }
   }
 
-  const handlePointerOver = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation()
-    if (mode === 'move' || mode === 'edit') {
-      applyHighlight(e.eventObject, true)
-    }
-  }
-
-  const handlePointerOut = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation()
-    if (mode === 'move' || mode === 'edit') {
-      applyHighlight(e.eventObject, false)
+  const handlePointerOut = () => {
+    if (hovered.current) {
+      applyHighlight(hovered.current, false)
+      hovered.current = null
     }
   }
 
@@ -108,7 +116,6 @@ export function useObjectInteractions({
     isSelected,
     handlePointerDown,
     handlePointerMove,
-    handlePointerOver,
     handlePointerOut,
   }
 }
