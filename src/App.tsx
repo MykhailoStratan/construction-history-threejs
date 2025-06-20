@@ -7,7 +7,14 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
-import { MeshStandardMaterial, Mesh, Object3D, DataTexture, RGBAFormat } from 'three'
+import {
+  MeshStandardMaterial,
+  Mesh,
+  Object3D,
+  DataTexture,
+  RGBAFormat,
+  type Material,
+} from 'three'
 import { gltfKhrPbrSpecularGlossinessConverter } from './gltfKhrPbrSpecularGlossinessConverter'
 import './App.css'
 
@@ -15,6 +22,21 @@ const dracoLoader = new DRACOLoader()
 const whitePixel = new Uint8Array([255, 255, 255, 255])
 const defaultTexture = new DataTexture(whitePixel, 1, 1, RGBAFormat)
 defaultTexture.needsUpdate = true
+
+function ensureTexture(material: Material | Material[]) {
+  const apply = (m: Material) => {
+    const mat = m as MeshStandardMaterial
+    if (!('map' in mat) || !mat.map) {
+      mat.map = defaultTexture
+      mat.needsUpdate = true
+    }
+  }
+  if (Array.isArray(material)) {
+    material.forEach(apply)
+  } else {
+    apply(material)
+  }
+}
 
 export default function App() {
   const [planes, setPlanes] = useState<number[]>([])
@@ -64,9 +86,10 @@ export default function App() {
           url,
           (obj) => {
             revoke()
-            obj.traverse((c) => {
+            obj.traverse((c: Object3D) => {
               if (c instanceof Mesh) {
-                c.material = new MeshStandardMaterial({ map: defaultTexture })
+                const mesh = c as Mesh
+                ensureTexture(mesh.material)
               }
             })
             resolve(obj)
@@ -85,9 +108,10 @@ export default function App() {
           url,
           (gltf) => {
             revoke()
-            gltf.scene.traverse((c) => {
+            gltf.scene.traverse((c: Object3D) => {
               if (c instanceof Mesh) {
-                c.material = new MeshStandardMaterial({ map: defaultTexture })
+                const mesh = c as Mesh
+                ensureTexture(mesh.material)
               }
             })
             resolve(gltf.scene)
