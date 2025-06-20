@@ -271,11 +271,34 @@ export default function ThreeScene({
   onCancelMove,
 }: ThreeSceneProps) {
   const [selected, setSelected] = useState<Object3D | null>(null)
+  const [pivot, setPivot] = useState<Object3D | null>(null)
+  const pivotRef = useRef<Object3D | null>(null)
+  const pivotPos = useRef(new Vector3())
   const orbitRef = useRef<OrbitControlsImpl | null>(null)
   const objectMap = useRef<Record<string, Object3D | null>>({})
   const registerObject = (id: string, obj: Object3D | null) => {
     objectMap.current[id] = obj
   }
+
+  useEffect(() => {
+    if (pivotRef.current) {
+      pivotRef.current.parent?.remove(pivotRef.current)
+    }
+    let pv: Object3D | null = null
+    if (selected) {
+      const box = new Box3().setFromObject(selected)
+      const center = box.getCenter(new Vector3())
+      pv = new Object3D()
+      pv.position.copy(center)
+      pivotPos.current.copy(center)
+      selected.parent?.add(pv)
+    }
+    pivotRef.current = pv
+    setPivot(pv)
+    return () => {
+      if (pv) pv.parent?.remove(pv)
+    }
+  }, [selected])
 
   useEffect(() => {
     // ensure nothing is selected on initial mount
@@ -376,15 +399,23 @@ export default function ThreeScene({
         if (!objectMap.current[tempLine.start.objectId] || !objectMap.current[tempLine.end.objectId]) return null
         return <LineObject line={{ start: tempLine.start, end: tempLine.end }} objectMap={objectMap} />
       })()}
-      {selected && (mode === 'move' || mode === 'edit') && (
+      {pivot && selected && (mode === 'move' || mode === 'edit') && (
         <TransformControls
-          object={selected}
+          object={pivot}
           mode="translate"
           onMouseDown={() => {
             if (orbitRef.current) orbitRef.current.enabled = false
           }}
           onMouseUp={() => {
             if (orbitRef.current) orbitRef.current.enabled = true
+          }}
+          onObjectChange={() => {
+            const delta = new Vector3().subVectors(
+              pivot.position,
+              pivotPos.current,
+            )
+            selected.position.add(delta)
+            pivotPos.current.copy(pivot.position)
           }}
         />
       )}

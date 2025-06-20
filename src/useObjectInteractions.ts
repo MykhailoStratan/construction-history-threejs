@@ -33,12 +33,30 @@ export function useObjectInteractions({
   const hovered = useRef<Object3D | null>(null)
   const raycaster = useRef<Raycaster>(new Raycaster())
 
+  const isDescendant = (parent: Object3D, child: Object3D | null): boolean => {
+    let obj: Object3D | null = child
+    while (obj) {
+      if (obj === parent) return true
+      obj = obj.parent
+    }
+    return false
+  }
+
   useEffect(() => {
     registerObject(objectId, ref.current)
     return () => registerObject(objectId, null)
   }, [objectId, registerObject])
 
   const isSelected = selectedObject != null && selectedObject === ref.current
+
+  useEffect(() => {
+    if (selectedObject && isDescendant(ref.current, selectedObject)) {
+      applyHighlight(selectedObject, true)
+      return () => {
+        applyHighlight(selectedObject, false)
+      }
+    }
+  }, [selectedObject])
 
   const applyHighlight = (obj: Object3D, highlight: boolean) => {
     obj.traverse((child) => {
@@ -115,7 +133,9 @@ export function useObjectInteractions({
 
   const handlePointerOut = () => {
     if (hovered.current) {
-      applyHighlight(hovered.current, false)
+      if (!selectedObject || hovered.current !== selectedObject) {
+        applyHighlight(hovered.current, false)
+      }
       hovered.current = null
     }
   }
