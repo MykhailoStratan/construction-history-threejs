@@ -3,9 +3,8 @@ import type { Object3D } from 'three'
 import {
   Mesh,
   Raycaster,
-  EdgesGeometry,
-  LineBasicMaterial,
-  LineSegments,
+  MeshBasicMaterial,
+  BackSide,
 } from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
 import type { LineEnd, PointData } from './types'
@@ -33,6 +32,15 @@ export function useObjectInteractions({
   const hovered = useRef<Object3D | null>(null)
   const raycaster = useRef<Raycaster>(new Raycaster())
 
+  const isDescendant = (parent: Object3D, child: Object3D | null): boolean => {
+    let obj: Object3D | null = child
+    while (obj) {
+      if (obj === parent) return true
+      obj = obj.parent
+    }
+    return false
+  }
+
   useEffect(() => {
     registerObject(objectId, ref.current)
     return () => registerObject(objectId, null)
@@ -40,26 +48,35 @@ export function useObjectInteractions({
 
   const isSelected = selectedObject != null && selectedObject === ref.current
 
+  useEffect(() => {
+    if (selectedObject && isDescendant(ref.current, selectedObject)) {
+      applyHighlight(selectedObject, true)
+      return () => {
+        applyHighlight(selectedObject, false)
+      }
+    }
+  }, [selectedObject])
+
   const applyHighlight = (obj: Object3D, highlight: boolean) => {
     obj.traverse((child) => {
       if ((child as Mesh).isMesh) {
         const mesh = child as Mesh
         if (highlight) {
-          if (!mesh.userData.__edgeHelper) {
-            const edges = new EdgesGeometry(mesh.geometry)
-            const line = new LineSegments(
-              edges,
-              new LineBasicMaterial({ color: '#ffff00' }),
-            )
-            mesh.add(line)
-            mesh.userData.__edgeHelper = line
+          if (!mesh.userData.__outline) {
+            const outlineGeom = mesh.geometry.clone()
+            const outlineMat = new MeshBasicMaterial({ color: '#ffff00', side: BackSide })
+            const outline = new Mesh(outlineGeom, outlineMat)
+            outline.scale.multiplyScalar(1.03)
+            outline.renderOrder = 1000
+            mesh.add(outline)
+            mesh.userData.__outline = outline
           }
-        } else if (mesh.userData.__edgeHelper) {
-          const line = mesh.userData.__edgeHelper as LineSegments
-          mesh.remove(line)
-          line.geometry.dispose()
-          ;(line.material as LineBasicMaterial).dispose()
-          delete mesh.userData.__edgeHelper
+        } else if (mesh.userData.__outline) {
+          const outline = mesh.userData.__outline as Mesh
+          mesh.remove(outline)
+          outline.geometry.dispose()
+          ;(outline.material as MeshBasicMaterial).dispose()
+          delete mesh.userData.__outline
         }
       }
     })
@@ -106,16 +123,19 @@ export function useObjectInteractions({
     raycaster.current.ray.origin.copy(e.ray.origin)
     raycaster.current.ray.direction.copy(e.ray.direction)
     const hit = raycaster.current.intersectObject(ref.current, true)[0]?.object ?? null
-    if (hovered.current !== hit) {
+    const target = mode === 'move' ? (hit ? ref.current : null) : hit
+    if (hovered.current !== target) {
       if (hovered.current) applyHighlight(hovered.current, false)
-      hovered.current = hit
-      if (hit) applyHighlight(hit, true)
+      hovered.current = target
+      if (target) applyHighlight(target, true)
     }
   }
 
   const handlePointerOut = () => {
     if (hovered.current) {
-      applyHighlight(hovered.current, false)
+      if (!selectedObject || hovered.current !== selectedObject) {
+        applyHighlight(hovered.current, false)
+      }
       hovered.current = null
     }
   }
