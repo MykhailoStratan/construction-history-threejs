@@ -3,10 +3,46 @@ import { OrbitControls, TransformControls } from '@react-three/drei'
 import { useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import { DoubleSide, Object3D, Vector3, Quaternion, Box3, SpotLight } from 'three'
+import {
+  DoubleSide,
+  Object3D,
+  Vector3,
+  Quaternion,
+  Box3,
+  SpotLight,
+  Mesh,
+  EdgesGeometry,
+  LineSegments,
+  LineBasicMaterial,
+} from 'three'
 import type { BufferGeometry, BufferAttribute } from 'three'
 import type { LineData, LineEnd, PointData, UploadData } from './types'
 import { useObjectInteractions } from './useObjectInteractions'
+
+function applyHighlight(object: Object3D, highlight: boolean) {
+  object.traverse((child) => {
+    if ((child as Mesh).isMesh) {
+      const mesh = child as Mesh
+      if (highlight) {
+        if (!mesh.userData.__edgeHelper) {
+          const edges = new EdgesGeometry(mesh.geometry)
+          const line = new LineSegments(
+            edges,
+            new LineBasicMaterial({ color: '#ffff00' }),
+          )
+          mesh.add(line)
+          mesh.userData.__edgeHelper = line
+        }
+      } else if (mesh.userData.__edgeHelper) {
+        const line = mesh.userData.__edgeHelper as LineSegments
+        mesh.remove(line)
+        line.geometry.dispose()
+        ;(line.material as LineBasicMaterial).dispose()
+        delete mesh.userData.__edgeHelper
+      }
+    }
+  })
+}
 
 
 function Box({
@@ -271,11 +307,29 @@ export default function ThreeScene({
   onCancelMove,
 }: ThreeSceneProps) {
   const [selected, setSelected] = useState<Object3D | null>(null)
+  const centerRef = useRef<Object3D>(new Object3D())
+  const lastCenter = useRef<Vector3>(new Vector3())
   const orbitRef = useRef<OrbitControlsImpl | null>(null)
   const objectMap = useRef<Record<string, Object3D | null>>({})
   const registerObject = (id: string, obj: Object3D | null) => {
     objectMap.current[id] = obj
   }
+
+  useEffect(() => {
+    if (!selected) return
+    const box = new Box3().setFromObject(selected)
+    const center = box.getCenter(new Vector3())
+    centerRef.current.position.copy(center)
+    lastCenter.current.copy(center)
+  }, [selected])
+
+  useEffect(() => {
+    if (mode !== 'edit' || !selected) return
+    applyHighlight(selected, true)
+    return () => {
+      applyHighlight(selected, false)
+    }
+  }, [selected, mode])
 
   useEffect(() => {
     // ensure nothing is selected on initial mount
@@ -378,8 +432,20 @@ export default function ThreeScene({
       })()}
       {selected && (mode === 'move' || mode === 'edit') && (
         <TransformControls
-          object={selected}
+          object={centerRef.current}
           mode="translate"
+          onObjectChange={() => {
+            if (!selected) return
+            const newPos = centerRef.current.position.clone()
+            const delta = newPos.clone().sub(lastCenter.current)
+            lastCenter.current.copy(newPos)
+            const worldPos = selected.getWorldPosition(new Vector3()).add(delta)
+            if (selected.parent) {
+              selected.position.copy(selected.parent.worldToLocal(worldPos))
+            } else {
+              selected.position.copy(worldPos)
+            }
+          }}
           onMouseDown={() => {
             if (orbitRef.current) orbitRef.current.enabled = false
           }}
