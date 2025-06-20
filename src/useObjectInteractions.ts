@@ -3,9 +3,8 @@ import type { Object3D } from 'three'
 import {
   Mesh,
   Raycaster,
-  EdgesGeometry,
-  LineBasicMaterial,
-  LineSegments,
+  MeshBasicMaterial,
+  BackSide,
 } from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
 import type { LineEnd, PointData } from './types'
@@ -63,21 +62,21 @@ export function useObjectInteractions({
       if ((child as Mesh).isMesh) {
         const mesh = child as Mesh
         if (highlight) {
-          if (!mesh.userData.__edgeHelper) {
-            const edges = new EdgesGeometry(mesh.geometry)
-            const line = new LineSegments(
-              edges,
-              new LineBasicMaterial({ color: '#ffff00' }),
-            )
-            mesh.add(line)
-            mesh.userData.__edgeHelper = line
+          if (!mesh.userData.__outline) {
+            const outlineGeom = mesh.geometry.clone()
+            const outlineMat = new MeshBasicMaterial({ color: '#ffff00', side: BackSide })
+            const outline = new Mesh(outlineGeom, outlineMat)
+            outline.scale.multiplyScalar(1.03)
+            outline.renderOrder = 1000
+            mesh.add(outline)
+            mesh.userData.__outline = outline
           }
-        } else if (mesh.userData.__edgeHelper) {
-          const line = mesh.userData.__edgeHelper as LineSegments
-          mesh.remove(line)
-          line.geometry.dispose()
-          ;(line.material as LineBasicMaterial).dispose()
-          delete mesh.userData.__edgeHelper
+        } else if (mesh.userData.__outline) {
+          const outline = mesh.userData.__outline as Mesh
+          mesh.remove(outline)
+          outline.geometry.dispose()
+          ;(outline.material as MeshBasicMaterial).dispose()
+          delete mesh.userData.__outline
         }
       }
     })
