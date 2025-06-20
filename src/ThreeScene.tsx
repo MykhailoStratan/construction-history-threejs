@@ -308,7 +308,7 @@ export default function ThreeScene({
 }: ThreeSceneProps) {
   const [selected, setSelected] = useState<Object3D | null>(null)
   const centerRef = useRef<Object3D>(new Object3D())
-  const prevCenter = useRef<Vector3>(new Vector3())
+  const centerOffset = useRef<Vector3>(new Vector3())
   const orbitRef = useRef<OrbitControlsImpl | null>(null)
   const objectMap = useRef<Record<string, Object3D | null>>({})
   const registerObject = (id: string, obj: Object3D | null) => {
@@ -320,7 +320,8 @@ export default function ThreeScene({
     const box = new Box3().setFromObject(selected)
     const center = box.getCenter(new Vector3())
     centerRef.current.position.copy(center)
-    prevCenter.current.copy(center)
+    const worldPos = selected.getWorldPosition(new Vector3())
+    centerOffset.current.copy(center).sub(worldPos)
   }, [selected])
 
   useEffect(() => {
@@ -436,10 +437,7 @@ export default function ThreeScene({
           mode="translate"
           onObjectChange={() => {
             if (!selected) return
-            const newCenter = centerRef.current.position.clone()
-            const delta = newCenter.clone().sub(prevCenter.current)
-            prevCenter.current.copy(newCenter)
-            const worldPos = selected.getWorldPosition(new Vector3()).add(delta)
+            const worldPos = centerRef.current.position.clone().sub(centerOffset.current)
             if (selected.parent) {
               selected.position.copy(selected.parent.worldToLocal(worldPos))
             } else {
@@ -447,7 +445,6 @@ export default function ThreeScene({
             }
           }}
           onMouseDown={() => {
-            prevCenter.current.copy(centerRef.current.position)
             if (orbitRef.current) orbitRef.current.enabled = false
           }}
           onMouseUp={() => {
