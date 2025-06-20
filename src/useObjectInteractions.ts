@@ -124,10 +124,11 @@ export function useObjectInteractions({
     raycaster.current.ray.origin.copy(e.ray.origin)
     raycaster.current.ray.direction.copy(e.ray.direction)
     const hit = raycaster.current.intersectObject(ref.current, true)[0]?.object ?? null
-    if (hovered.current !== hit) {
+    const target = mode === 'move' ? (hit ? ref.current : null) : hit
+    if (hovered.current !== target) {
       if (hovered.current) applyHighlight(hovered.current, false)
-      hovered.current = hit
-      if (hit) applyHighlight(hit, true)
+      hovered.current = target
+      if (target) applyHighlight(target, true)
     }
   }
 
