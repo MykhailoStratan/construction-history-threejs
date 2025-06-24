@@ -29,22 +29,17 @@ function Box({
   onUpdateTempLineEnd: (point: LineEnd) => void
   registerObject: (id: string, obj: Object3D | null) => void
 }) {
-  const {
-    ref,
-    isSelected,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerOut,
-  } = useObjectInteractions({
-    objectId,
-    onSelect,
-    selectedObject,
-    mode,
-    onAddPoint,
-    onAddLinePoint,
-    onUpdateTempLineEnd,
-    registerObject,
-  })
+  const { ref, handlePointerDown, handlePointerMove, handlePointerOut } =
+    useObjectInteractions({
+      objectId,
+      onSelect,
+      selectedObject,
+      mode,
+      onAddPoint,
+      onAddLinePoint,
+      onUpdateTempLineEnd,
+      registerObject,
+    })
   return (
     <mesh
       ref={ref}
@@ -54,11 +49,7 @@ function Box({
       onPointerOut={handlePointerOut}
     >
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial
-        color={isSelected ? '#00008B' : 'orange'}
-        transparent
-        opacity={isSelected ? 0.8 : 1}
-      />
+      <meshStandardMaterial color="orange" />
     </mesh>
   )
 }
@@ -83,22 +74,17 @@ function Plane({
   onUpdateTempLineEnd: (point: LineEnd) => void
   registerObject: (id: string, obj: Object3D | null) => void
 }) {
-  const {
-    ref,
-    isSelected,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerOut,
-  } = useObjectInteractions({
-    objectId,
-    onSelect,
-    selectedObject,
-    mode,
-    onAddPoint,
-    onAddLinePoint,
-    onUpdateTempLineEnd,
-    registerObject,
-  })
+  const { ref, handlePointerDown, handlePointerMove, handlePointerOut } =
+    useObjectInteractions({
+      objectId,
+      onSelect,
+      selectedObject,
+      mode,
+      onAddPoint,
+      onAddLinePoint,
+      onUpdateTempLineEnd,
+      registerObject,
+    })
   return (
     <mesh
       ref={ref}
@@ -109,12 +95,7 @@ function Plane({
       onPointerOut={handlePointerOut}
     >
       <planeGeometry args={[10, 10]} />
-      <meshStandardMaterial
-        color={isSelected ? '#00008B' : 'lightgray'}
-        side={DoubleSide}
-        transparent
-        opacity={isSelected ? 0.8 : 1}
-      />
+      <meshStandardMaterial color="lightgray" side={DoubleSide} />
     </mesh>
   )
 }
