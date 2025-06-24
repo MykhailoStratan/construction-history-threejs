@@ -10,6 +10,31 @@ import {
 import type { ThreeEvent } from '@react-three/fiber'
 import type { LineEnd, PointData } from './types'
 
+export function applyHighlight(obj: Object3D, highlight: boolean) {
+  obj.traverse((child) => {
+    if ((child as Mesh).isMesh) {
+      const mesh = child as Mesh
+      if (highlight) {
+        if (!mesh.userData.__edgeHelper) {
+          const edges = new EdgesGeometry(mesh.geometry)
+          const line = new LineSegments(
+            edges,
+            new LineBasicMaterial({ color: '#ffff00' }),
+          )
+          mesh.add(line)
+          mesh.userData.__edgeHelper = line
+        }
+      } else if (mesh.userData.__edgeHelper) {
+        const line = mesh.userData.__edgeHelper as LineSegments
+        mesh.remove(line)
+        line.geometry.dispose()
+        ;(line.material as LineBasicMaterial).dispose()
+        delete mesh.userData.__edgeHelper
+      }
+    }
+  })
+}
+
 export function useObjectInteractions({
   objectId,
   onSelect,
@@ -40,31 +65,6 @@ export function useObjectInteractions({
 
   const isSelected = selectedObject != null && selectedObject === ref.current
 
-  const applyHighlight = (obj: Object3D, highlight: boolean) => {
-    obj.traverse((child) => {
-      if ((child as Mesh).isMesh) {
-        const mesh = child as Mesh
-        if (highlight) {
-          if (!mesh.userData.__edgeHelper) {
-            const edges = new EdgesGeometry(mesh.geometry)
-            const line = new LineSegments(
-              edges,
-              new LineBasicMaterial({ color: '#ffff00' }),
-            )
-            mesh.add(line)
-            mesh.userData.__edgeHelper = line
-          }
-        } else if (mesh.userData.__edgeHelper) {
-          const line = mesh.userData.__edgeHelper as LineSegments
-          mesh.remove(line)
-          line.geometry.dispose()
-          ;(line.material as LineBasicMaterial).dispose()
-          delete mesh.userData.__edgeHelper
-        }
-      }
-    })
-  }
-
   const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
     const local = ref.current
@@ -90,7 +90,9 @@ export function useObjectInteractions({
     } else if (mode === 'move') {
       onSelect(ref.current)
     } else if (mode === 'edit') {
-      onSelect(hit ? hit.object : ref.current)
+      const target = hit ? hit.object : ref.current
+      onSelect(target)
+      applyHighlight(target, true)
     }
   }
 
@@ -107,7 +109,11 @@ export function useObjectInteractions({
     raycaster.current.ray.direction.copy(e.ray.direction)
     const hit = raycaster.current.intersectObject(ref.current, true)[0]?.object ?? null
     if (hovered.current !== hit) {
-      if (hovered.current) applyHighlight(hovered.current, false)
+      if (
+        hovered.current &&
+        !(mode === 'edit' && hovered.current === selectedObject)
+      )
+        applyHighlight(hovered.current, false)
       hovered.current = hit
       if (hit) applyHighlight(hit, true)
     }
@@ -115,7 +121,9 @@ export function useObjectInteractions({
 
   const handlePointerOut = () => {
     if (hovered.current) {
-      applyHighlight(hovered.current, false)
+      if (!(mode === 'edit' && hovered.current === selectedObject)) {
+        applyHighlight(hovered.current, false)
+      }
       hovered.current = null
     }
   }

@@ -6,7 +6,7 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { DoubleSide, Object3D, Vector3, Quaternion, Box3, SpotLight } from 'three'
 import type { BufferGeometry, BufferAttribute } from 'three'
 import type { LineData, LineEnd, PointData, UploadData } from './types'
-import { useObjectInteractions } from './useObjectInteractions'
+import { useObjectInteractions, applyHighlight } from './useObjectInteractions'
 
 
 function Box({
@@ -281,6 +281,23 @@ export default function ThreeScene({
     // ensure nothing is selected on initial mount
     setSelected(null)
   }, [])
+
+  const prevHighlighted = useRef<Object3D | null>(null)
+
+  useEffect(() => {
+    if (prevHighlighted.current && prevHighlighted.current !== selected) {
+      applyHighlight(prevHighlighted.current, false)
+    }
+    if (mode === 'edit' && selected) {
+      applyHighlight(selected, true)
+      prevHighlighted.current = selected
+    } else {
+      if (prevHighlighted.current) {
+        applyHighlight(prevHighlighted.current, false)
+      }
+      prevHighlighted.current = null
+    }
+  }, [selected, mode])
 
   useEffect(() => {
     function handleKey(event: KeyboardEvent) {
