@@ -65,6 +65,10 @@ export function useObjectInteractions({
     })
   }
 
+  useEffect(() => {
+    applyHighlight(ref.current, isSelected)
+  }, [isSelected])
+
   const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
     const local = ref.current
@@ -115,7 +119,7 @@ export function useObjectInteractions({
 
   const handlePointerOut = () => {
     if (hovered.current) {
-      applyHighlight(hovered.current, false)
+      applyHighlight(hovered.current, isSelected)
       hovered.current = null
     }
   }
